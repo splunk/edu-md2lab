@@ -1,0 +1,261 @@
+* {
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  /* border: 1px solid red; */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: #242424;
+  margin-left: 25px;
+  margin-right: 25px;
+}
+
+h1 {
+  font-size: 28px;
+  color: #ee0884;
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: normal;
+  color: black;
+  margin-top: 16px;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #242424;
+  padding: 5px 0 0 0;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid black;
+}
+
+h4 {
+  font-size: 18px;
+  color: #f56a00;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+h5 {
+  color: #73A550;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+h6 {
+  color: #2E74B5;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+p {
+  margin: 0 0 2px 0;
+  line-height: 1.25;
+}
+
+ol {
+  list-style-type: decimal !important;  
+  padding-left: 20px;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+a:link {
+  color: #EE0884;
+}
+
+img {
+  max-width: 99.99%;
+  margin: 0;
+  padding: 0;
+}
+
+/* CODE BLOCK STYLES */
+pre { 
+  background-color: #4c4c4c;
+  padding: 5px;
+  white-space: pre-wrap;
+  margin: 2px 0 2px 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+code {
+  font-family: 'Consolas', monospace;
+  font-size: 14px;
+}
+
+pre>code {
+  color: white;
+  width: 1900px;
+  padding: 1px;
+  white-space: pre-wrap;
+}
+
+/* TABLE STYLES */
+table {
+  border-collapse: collapse;
+  margin: 5px 0 10px 0;
+  min-width: 400px;
+  line-height: 10pt;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+thead tr {
+  background-color: #4c4c4c;
+  color: white;
+  text-align: left;
+}
+
+th {
+  padding: 8px;
+  padding-left: 8px;
+}
+
+td {
+  font-size: 14px;
+  padding: 8px;
+  line-height: 1.0125;
+}
+
+tbody tr {
+  border-bottom: 1px solid #202020;
+}
+
+tbody tr:nth-of-type(even) {    
+  /* Splunk brand */
+  background-color: #f0f0f0;
+}
+
+tbody tr:last-of-type {
+  /* Splunk brand */
+  border-bottom: 1px solid #303030;
+}
+
+
+/* ADMONITION STYLES */
+.admonition {
+  display: flex;
+  align-items: flex-start; 
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.admonition-title {
+  font-weight: bold;
+  min-width: 100px;
+  padding: 8px;
+  margin-left: 8px;
+  flex-shrink: 0; 
+  white-space: nowrap; 
+}
+
+.admonition-content {
+  flex: 1;
+  padding: 8px 8px 8px 0;
+}
+
+.admonition.answers {
+  border-left: 4px solid #ee0884;
+  padding: 1em;
+  margin: 1em 0;
+  color: #ee0884;
+}
+
+
+.admonition.caution {
+  /* Splunk brand yellow */
+  border-color: #f0d318;
+  border-left: 4px solid #f0d318;
+  background-color: #fbf2cb; 
+  color: #665c00;
+
+}
+
+.admonition.danger {
+  /* Splunk brand secondary color */
+  border-color: #c83c10;
+  border-left: 4px solid #c83c10;
+  background-color: #f0d4c7; 
+  color: #8a2200;
+
+}
+
+.admonition.hint {
+  /* Splunk brand secondary color */
+  border-color: #894dd6;
+  border-left: solid 4px #894dd6;
+  background-color: #e5d9f7; 
+  color: #4b2e83;
+
+}
+
+.admonition.info {
+  /* Splunk brand secondary color */
+  border-color: #296aa8;
+  border-left: 4px solid #296aa8;
+  background-color: #dbe4ef; 
+  color: #184f81;
+
+}
+
+.admonition.note {
+  background-color: #E6E6E6;
+  /* border: solid 1px #7F7F7F; */
+  border-left: solid 4px #7F7F7F;
+  color: #333333;
+
+}
+
+.admonition.scenario {
+  /* Splunk brand secondary color */
+  border-top: dotted #7F7F7F;
+  border-bottom: dotted #7F7F7F; 
+  color: #333333;
+}
+
+.admonition.tip {
+  /* Splunk brand secondary color */
+  border-color: #59c3aa;
+  border-left: 4px solid #59c3aa;
+  background-color: #d6ebe0; 
+  color: #1b4f44;
+}
+
+.admonition.warning {
+  border-color: #f99d1c; 
+  border-left: 4px solid #f99d1c; 
+  background-color: #ffe6b3; 
+  color: #5c3d00; 
+}
+
+
+.admonition .admonition-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+
+
+
+  
