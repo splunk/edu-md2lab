@@ -1,30 +1,28 @@
-const path = require("path");
-const fs = require("fs");
-const yaml = require("js-yaml");
-const logger = require("../utils/logger");
+import path from "path";
+import fs from "fs";
+import yaml from "js-yaml";
+import logger from "../utils/logger.js";
 
-function getCourseTitle(sourceDir) {
+export function getCourseTitle(sourceDir) {
   const metadataPath = path.join(sourceDir, "metadata.yaml");
 
   if (!fs.existsSync(metadataPath)) {
-    logger.warn("⚠️ metadata.yaml not found. Using default title.");
+    logger.warn("metadata.yaml not found. Using default title.");
     return "lab-guide";
   }
 
   try {
     const metadata = yaml.load(fs.readFileSync(metadataPath, "utf8"));
     const title = metadata.course_title || "lab-guide";
-    logger.info(`Using course title: ${title}`);
     return title;
   } catch (err) {
-    logger.error(`❌ Failed to parse metadata.yaml: ${err.message}`);
+    logger.error(`Failed to parse metadata.yaml: ${err.message}`);
     return "lab-guide";
   }
 }
 
-function slugify(text) {
+export function slugify(text) {
   logger.debug(`Slugifying text: "${text}"`);
-
   return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
@@ -32,7 +30,7 @@ function slugify(text) {
     .replace(/\s+/g, "-");
 }
 
-async function getOrderedMarkdownFiles(sourceDir) {
+export async function getOrderedMarkdownFiles(sourceDir) {
   try {
     logger.debug("Reading directory contents to fetch markdown files.");
 
@@ -59,18 +57,16 @@ async function getOrderedMarkdownFiles(sourceDir) {
       logger.debug("Adding resources.md to the ordered list.");
     }
 
-    logger.info(`Ordered markdown files: ${ordered.join(", ")}`);
+    logger.info(
+      `🔀 Shuffling Markdown files:\n${ordered
+        .map((f) => `  * ${f}`)
+        .join("\n")}`
+    );
     return ordered.map((f) => path.join(sourceDir, f));
   } catch (err) {
     logger.error(
-      `❌ Error reading markdown files in directory ${sourceDir}: ${err.message}`
+      `Error reading Markdown files in directory ${sourceDir}: ${err.message}`
     );
     throw err;
   }
 }
-
-module.exports = {
-  getCourseTitle,
-  slugify,
-  getOrderedMarkdownFiles,
-};

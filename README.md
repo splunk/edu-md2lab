@@ -13,7 +13,7 @@ This tool is developed and maintained by Splunk EDU for internal use. The reposi
 
 * **All rights reserved**: You may not modify, distribute, or sublicense this software without explicit written permission from Splunk.
 
-For inquiries, please contact [education@splunk.com].
+For inquiries, please contact <education@splunk.com>.
 
 
 ## Acknowledgment
@@ -22,6 +22,6 @@ Portions of this package were generated with the assistance of ChatGPT and inter
 
 ---
 
-Copyright (c) 2025 Splunk LLC. All rights reserved.
+© 2025 Splunk LLC. All rights reserved.
 
 

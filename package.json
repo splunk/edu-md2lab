@@ -1,7 +1,8 @@
 {
-  "name": "@splunk/edu-md2lab",
+  "name": "@splunk-edu/md2lab",
   "version": "1.0.0",
-  "description": "Convert Markdown to Splunk EDU course materials. ",
+  "description": "Convert Markdown to Splunk EDU course materials.",
+  "type": "module",
   "main": "./src/index.js",
   "bin": {
     "md2lab": "./src/index.js"
@@ -12,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/splunk/edu-md2lab.git"
+    "url": "git+https://github.com/splunk/edu-md2lab.git"
   },
   "author": "Splunk EDU",
   "license": "UNLICENSED",
@@ -25,10 +26,9 @@
     "markdown-it-container": "^4.0.0",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.7.2",
-    "sharp": "^0.34.1"
-  },
-  "devDependencies": {
+    "sharp": "^0.34.1",
     "stylelint": "^16.19.1",
     "stylelint-config-standard": "^38.0.0"
-  }
+  },
+  "devDependencies": {}
 }

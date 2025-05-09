@@ -1,8 +1,10 @@
-const logger = require("../utils/logger");
+import logger from "../utils/logger.js";
+import container from "markdown-it-container";
 
-function registerContainers(md, { includeAnswers }) {
-  const container = require("markdown-it-container");
-
+/**
+ * Register custom containers like ::: note, ::: answers, etc.
+ */
+export function registerContainers(md, { includeAnswers }) {
   const types = [
     "caution",
     "danger",
@@ -17,6 +19,7 @@ function registerContainers(md, { includeAnswers }) {
   ];
 
   const originalRender = md.renderer.render;
+
   md.renderer.render = function (tokens, options, env) {
     if (!includeAnswers) {
       tokens = tokens.filter((t, idx) => {
@@ -38,7 +41,6 @@ function registerContainers(md, { includeAnswers }) {
   };
 
   types.forEach((type) => {
-    logger.info(`Registering container type: ${type}`);
     md.use(container, type, {
       validate(params) {
         return params.trim().startsWith(type);
@@ -48,7 +50,6 @@ function registerContainers(md, { includeAnswers }) {
         const token = tokens[idx];
         const info = token.info.trim();
 
-        // Skip "answers" blocks if not included
         if (type === "answers" && !includeAnswers) {
           if (token.nesting === 1) token._skip = true;
           logger.debug(`Skipping "answers" block (not included)`);
@@ -60,11 +61,12 @@ function registerContainers(md, { includeAnswers }) {
           let titleHTML = "";
 
           if (type === "custom") {
-            // Custom block with optional title
             const match =
               info.match(new RegExp(`^${type}\\s+"(.+)"$`)) ||
               info.match(new RegExp(`^${type}\\s+(.*)$`));
             const title = match ? match[1].trim() : "";
+
+            logger.info(`📝 Registering custom admonition ${title}`);
 
             if (title) {
               const slug = title
@@ -102,12 +104,15 @@ function registerContainers(md, { includeAnswers }) {
   });
 }
 
-function stripAnswersBlocks(markdown) {
+/**
+ * Strips ::: answers blocks from Markdown content.
+ */
+export function stripAnswersBlocks(markdown) {
   const lines = markdown.split("\n");
   const result = [];
   let insideAnswers = false;
 
-  for (let line of lines) {
+  for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("::: answers")) {
       insideAnswers = true;
@@ -127,18 +132,9 @@ function stripAnswersBlocks(markdown) {
   return result.join("\n");
 }
 
-function markdownHasAnswersBlock(content) {
-  const hasAnswers = /::: *answers/.test(content);
-  if (hasAnswers) {
-    logger.info(`Content contains "answers" block.`);
-  } else {
-    logger.info(`Content does not contain "answers" block.`);
-  }
-  return hasAnswers;
+/**
+ * Checks if the Markdown contains any ::: answers blocks.
+ */
+export function markdownHasAnswersBlock(content) {
+  return /::: *answers/.test(content);
 }
-
-module.exports = {
-  registerContainers,
-  stripAnswersBlocks,
-  markdownHasAnswersBlock,
-};

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-const fs = require("fs");
-const { Command } = require("commander");
-const { convertMarkdownToPdf } = require("./generators/pdfGenerator");
+
+import fs from "fs";
+import path from "path";
+import { Command } from "commander";
+import { convertMarkdownToPdf } from "./generators/pdfGenerator.js";
+import logger from "./utils/logger.js";
 
 const program = new Command();
-const path = require("path");
 
 program
   .name("md2lab")
@@ -16,7 +18,7 @@ program
     "[sourceDir]",
     "Path to the directory containing markdown files (defaults to current directory)"
   )
-  .option("-h, --html", "Output rendered HTML instead of generating a PDF")
+  .option("-H, --html", "Output rendered HTML instead of generating a PDF")
   .action((sourceDir = ".", options) => {
     const resolvedPath = path.resolve(sourceDir);
 
@@ -24,13 +26,13 @@ program
       !fs.existsSync(resolvedPath) ||
       !fs.lstatSync(resolvedPath).isDirectory()
     ) {
-      console.error(`❌ The path "${resolvedPath}" is not a valid directory.`);
+      logger.error(`The path "${resolvedPath}" is not a valid directory.`);
       process.exit(1);
     }
 
     convertMarkdownToPdf(resolvedPath, { outputHtml: options.html }).catch(
       (err) => {
-        console.error("❌ Error generating output:", err);
+        logger.error("Error generating output:", err);
         process.exit(1);
       }
     );

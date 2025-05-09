@@ -1,29 +1,29 @@
-const fs = require("fs");
-const path = require("path");
-const sharp = require("sharp");
-const logger = require("../utils/logger");
+import fs from "fs";
+import path from "path";
+import sharp from "sharp";
+import logger from "../utils/logger.js";
 
-async function generateBase64Logo(logoPath, height = 30) {
+export async function generateBase64Logo(logoPath, height = 30) {
   try {
     logger.debug(`Resizing logo from path: ${logoPath} to height: ${height}px`);
 
     const buffer = await sharp(logoPath)
       .resize({ height })
-      .png({ quality: 80 }) // Use compression quality for PNGs
+      .png({ quality: 80 })
       .toBuffer();
 
     const base64 = buffer.toString("base64");
-    logger.info("Logo resized and converted to Base64.");
+    logger.info("📐 Resizing and encoding logo");
     return `data:image/png;base64,${base64}`;
   } catch (err) {
     logger.error(
-      `❌ Error processing image at path: ${logoPath} - ${err.message}`
+      `Error processing image at path: ${logoPath} - ${err.message}`
     );
     throw err;
   }
 }
 
-function embedLocalImagesInMarkdown(markdown, sourceDir) {
+export function embedLocalImagesInMarkdown(markdown, sourceDir) {
   logger.debug("Embarking on embedding images in Markdown content.");
 
   return markdown.replace(
@@ -33,7 +33,7 @@ function embedLocalImagesInMarkdown(markdown, sourceDir) {
 
       if (!fs.existsSync(resolvedPath)) {
         logger.warn(
-          `⚠️ Image not found: ${imgPath}. Path resolved to: ${resolvedPath}`
+          `Image not found: ${imgPath}. Path resolved to: ${resolvedPath}`
         );
         return match;
       }
@@ -42,10 +42,8 @@ function embedLocalImagesInMarkdown(markdown, sourceDir) {
       const mime = `image/${ext === "jpg" ? "jpeg" : ext}`;
       const base64 = fs.readFileSync(resolvedPath).toString("base64");
 
-      logger.info(`Successfully embedded image: ${imgPath}`);
+      logger.info(`🖼️  Embedding ${imgPath}`);
       return `![${alt}](data:${mime};base64,${base64})`;
     }
   );
 }
-
-module.exports = { generateBase64Logo, embedLocalImagesInMarkdown };

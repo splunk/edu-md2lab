@@ -1,28 +1,33 @@
-const path = require("path");
-const fse = require("fs-extra");
-const fs = require("fs");
-const puppeteer = require("puppeteer");
-const beautify = require("js-beautify").html;
+import path from "path";
+import fs from "fs";
+import fse from "fs-extra";
+import puppeteer from "puppeteer";
+import beautifyPkg from "js-beautify";
+const { html: beautify } = beautifyPkg;
+import markdownIt from "markdown-it";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
-const markdownIt = require("markdown-it");
-const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
-
-const { embedLocalImagesInMarkdown } = require("../utils/imageHandler");
-const {
+import { embedLocalImagesInMarkdown } from "../utils/imageHandler.js";
+import {
   getCourseTitle,
   slugify,
   getOrderedMarkdownFiles,
-} = require("../utils/fileHandler");
-const { validateCss } = require("../utils/cssValidator");
-const {
+} from "../utils/fileHandler.js";
+import { validateCss } from "../utils/cssValidator.mjs";
+import {
   registerContainers,
   stripAnswersBlocks,
   markdownHasAnswersBlock,
-} = require("./htmlGenerator");
+} from "./htmlGenerator.js";
+import logger from "../utils/logger.js";
 
-const logger = require("../utils/logger");
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-async function addHeadersAndFootersToPdfBuffer(
+export async function addHeadersAndFootersToPdfBuffer(
   pdfBuffer,
   logoPath,
   courseTitle = ""
@@ -45,7 +50,6 @@ async function addHeadersAndFootersToPdfBuffer(
   pages.forEach((page, index) => {
     const { width, height } = page.getSize();
 
-    // Draw header logo
     page.drawImage(image, {
       x: marginLeft,
       y: height - imageDims.height - 32,
@@ -53,7 +57,6 @@ async function addHeadersAndFootersToPdfBuffer(
       height: imageDims.height,
     });
 
-    // Draw header line
     page.drawLine({
       start: { x: marginLeft, y: height - marginTop + 5 },
       end: { x: width - marginLeft, y: height - marginTop + 5 },
@@ -61,7 +64,6 @@ async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.8, 0.8, 0.8),
     });
 
-    // Footer: draw left (copyright)
     page.drawText(footerLeft, {
       x: marginLeft,
       y: 45,
@@ -70,7 +72,6 @@ async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.5, 0.5, 0.5),
     });
 
-    // Footer: draw center (course title)
     const titleSize = 9;
     const titleWidth = helveticaFont.widthOfTextAtSize(courseTitle, titleSize);
     page.drawText(courseTitle, {
@@ -84,7 +85,7 @@ async function addHeadersAndFootersToPdfBuffer(
     const pageNumText = `${index + 1}`;
     const textWidth = helveticaFont.widthOfTextAtSize(pageNumText, 9);
     page.drawText(pageNumText, {
-      x: width - textWidth - marginLeft, // Align with right margin
+      x: width - textWidth - marginLeft,
       y: 45,
       size: 9,
       font: helveticaFont,
@@ -95,13 +96,13 @@ async function addHeadersAndFootersToPdfBuffer(
   return await pdfDoc.save();
 }
 
-async function convertMarkdownToPdf(sourceDir, options = {}) {
+export async function convertMarkdownToPdf(sourceDir, options = {}) {
   const { outputHtml = false, pdfOptions = {} } = options;
   const outputDir = path.join(sourceDir, "pdfs");
   await fse.ensureDir(outputDir);
   const files = await getOrderedMarkdownFiles(sourceDir);
   if (files.length === 0) {
-    logger.error(`❌ No Markdown files found in "${sourceDir}".`);
+    logger.error(`No Markdown files found in "${sourceDir}".`);
     logger.error(
       "Please make sure the directory contains one or more .md files."
     );
@@ -170,11 +171,9 @@ async function convertMarkdownToPdf(sourceDir, options = {}) {
 
     if (fs.existsSync(customCssPath)) {
       const customCss = fs.readFileSync(customCssPath, "utf-8");
-
-      validateCss(customCss, customCssPath);
-
+      await validateCss(customCss, customCssPath);
       cssContent += "\n\n/* Custom Styles */\n" + customCss;
-      logger.info("✅ Applied custom.css from source directory.");
+      logger.info("🎨 Applying custom.css");
     }
 
     const logoPath = path.join(__dirname, "../assets", "logo-splunk-cisco.png");
@@ -194,13 +193,12 @@ async function convertMarkdownToPdf(sourceDir, options = {}) {
       </html>
     `;
 
-    // If outputHtml is enabled, print formatted HTML
     if (outputHtml) {
       const prettyHtml = beautify(fullHtml, {
         indent_size: 2,
         space_in_empty_paren: true,
       });
-      logger.info("Generated HTML:", prettyHtml);
+      logger.info("⚙️ Generating HTML ", prettyHtml);
       continue;
     }
 
@@ -209,7 +207,7 @@ async function convertMarkdownToPdf(sourceDir, options = {}) {
       browser = await puppeteer.launch();
     } catch (err) {
       logger.error(
-        "❌ Failed to launch Puppeteer. Make sure Chromium is installed."
+        "Failed to launch Puppeteer. Make sure Chromium is installed."
       );
       throw err;
     }
@@ -242,16 +240,11 @@ async function convertMarkdownToPdf(sourceDir, options = {}) {
         logoPath,
         title
       );
-
       fs.writeFileSync(outputPdfPath, finalBuffer);
     } else {
       fs.writeFileSync(outputPdfPath, pdfBuffer);
     }
 
-    logger.info(`✅ PDF ${variant.label} created at: ${outputPdfPath}`);
+    logger.info(`✅ Creating lab guide ${variant.label} in ${outputPdfPath}`);
   }
 }
-
-module.exports = {
-  convertMarkdownToPdf,
-};
