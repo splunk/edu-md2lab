@@ -1,9 +1,6 @@
 import logger from "../utils/logger.js";
 import container from "markdown-it-container";
 
-/**
- * Register custom containers like ::: note, ::: answers, etc.
- */
 export function registerContainers(md, { includeAnswers }) {
   const types = [
     "caution",
@@ -104,9 +101,6 @@ export function registerContainers(md, { includeAnswers }) {
   });
 }
 
-/**
- * Strips ::: answers blocks from Markdown content.
- */
 export function stripAnswersBlocks(markdown) {
   const lines = markdown.split("\n");
   const result = [];
@@ -132,9 +126,6 @@ export function stripAnswersBlocks(markdown) {
   return result.join("\n");
 }
 
-/**
- * Checks if the Markdown contains any ::: answers blocks.
- */
 export function markdownHasAnswersBlock(content) {
   return /::: *answers/.test(content);
 }

@@ -170,6 +170,12 @@ tbody tr:last-of-type {
   white-space: nowrap; 
 }
 
+/* .admonition .admonition-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+} */
+
+
 .admonition-content {
   flex: 1;
   padding: 8px 8px 8px 0;
@@ -189,7 +195,6 @@ tbody tr:last-of-type {
   border-left: 4px solid #f0d318;
   background-color: #fbf2cb; 
   color: #665c00;
-
 }
 
 .admonition.danger {
@@ -248,13 +253,6 @@ tbody tr:last-of-type {
   background-color: #ffe6b3; 
   color: #5c3d00; 
 }
-
-
-.admonition .admonition-title {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
 
 
 

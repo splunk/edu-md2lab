@@ -1,34 +1,7 @@
 import path from "path";
 import fs from "fs";
-import yaml from "js-yaml";
+// import yaml from "js-yaml";
 import logger from "../utils/logger.js";
-
-export function getCourseTitle(sourceDir) {
-  const metadataPath = path.join(sourceDir, "metadata.yaml");
-
-  if (!fs.existsSync(metadataPath)) {
-    logger.warn("metadata.yaml not found. Using default title.");
-    return "lab-guide";
-  }
-
-  try {
-    const metadata = yaml.load(fs.readFileSync(metadataPath, "utf8"));
-    const title = metadata.course_title || "lab-guide";
-    return title;
-  } catch (err) {
-    logger.error(`Failed to parse metadata.yaml: ${err.message}`);
-    return "lab-guide";
-  }
-}
-
-export function slugify(text) {
-  logger.debug(`Slugifying text: "${text}"`);
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
 
 export async function getOrderedMarkdownFiles(sourceDir) {
   try {

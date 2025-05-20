@@ -3,39 +3,65 @@
 import fs from "fs";
 import path from "path";
 import { Command } from "commander";
-import { convertMarkdownToPdf } from "./generators/pdfGenerator.js";
+
+import { generatePdf } from "./generators/pdfGenerator.js";
+import {
+  getMetadataPath,
+  loadMetadata,
+  updateMetadataDate,
+  getFormattedDate,
+} from "./utils/metadataHandler.js";
 import logger from "./utils/logger.js";
 
 const program = new Command();
 
 program
   .name("md2lab")
-  .description("Convert a structured markdown lab into a styled PDF document.")
+  .description("Convert Markdown into a styled PDF.")
   .version("1.0.0");
 
 program
   .argument(
     "[sourceDir]",
-    "Path to the directory containing markdown files (defaults to current directory)"
+    "Path to the directory containing Markdown files (defaults to current directory)"
+    // process.cwd()
   )
   .option("-H, --html", "Output rendered HTML instead of generating a PDF")
-  .action((sourceDir = ".", options) => {
-    const resolvedPath = path.resolve(sourceDir);
+  .option(
+    "-d, --date <date>",
+    "Custom date for 'updated' field in YYYY-MM-DD format"
+  )
+  .action(async (sourceDir = ".", options) => {
+    try {
+      // const resolvedPath = path.resolve(sourceDir);
 
-    if (
-      !fs.existsSync(resolvedPath) ||
-      !fs.lstatSync(resolvedPath).isDirectory()
-    ) {
-      logger.error(`The path "${resolvedPath}" is not a valid directory.`);
-      process.exit(1);
-    }
-
-    convertMarkdownToPdf(resolvedPath, { outputHtml: options.html }).catch(
-      (err) => {
-        logger.error("Error generating output:", err);
+      if (
+        !fs.existsSync(path.resolve(sourceDir)) ||
+        !fs.lstatSync(path.resolve(sourceDir)).isDirectory()
+      ) {
+        logger.error(`The path "${sourceDir}" is not a valid directory.`);
         process.exit(1);
       }
-    );
+
+      // Get meta!
+      const metadataPath = await getMetadataPath(sourceDir);
+      const metadata = await loadMetadata(metadataPath);
+
+      const updatedDate = getFormattedDate(options.date);
+
+      generatePdf(sourceDir, metadata, { outputHtml: options.html }).catch(
+        (err) => {
+          logger.error("Error generating output:", err);
+          process.exit(1);
+        }
+      );
+
+      await updateMetadataDate(metadataPath, metadata, updatedDate);
+    } catch (err) {
+      logger.error("Error:", err.stack || err.message || err);
+      console.error(err);
+      process.exit(1);
+    }
   });
 
 program.parse();

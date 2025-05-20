@@ -10,17 +10,19 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import { embedLocalImagesInMarkdown } from "../utils/imageHandler.js";
-import {
-  getCourseTitle,
-  slugify,
-  getOrderedMarkdownFiles,
-} from "../utils/fileHandler.js";
+
+import { getCourseTitle, slugify } from "../utils/metadataHandler.js";
+
+import { getOrderedMarkdownFiles } from "../utils/fileHandler.js";
+
 import { validateCss } from "../utils/cssValidator.mjs";
+
 import {
   registerContainers,
   stripAnswersBlocks,
   markdownHasAnswersBlock,
 } from "./htmlGenerator.js";
+
 import logger from "../utils/logger.js";
 
 // ESM-compatible __dirname
@@ -96,7 +98,7 @@ export async function addHeadersAndFootersToPdfBuffer(
   return await pdfDoc.save();
 }
 
-export async function convertMarkdownToPdf(sourceDir, options = {}) {
+export async function generatePdf(sourceDir, metadata, options = {}) {
   const { outputHtml = false, pdfOptions = {} } = options;
   const outputDir = path.join(sourceDir, "pdfs");
   await fse.ensureDir(outputDir);
@@ -156,7 +158,10 @@ export async function convertMarkdownToPdf(sourceDir, options = {}) {
       }
     }
 
-    const title = getCourseTitle(sourceDir);
+    // const metadataPath = await getMetadataPath(sourceDir);
+    // const metadata = await loadMetadata(metadataPath);
+
+    const title = getCourseTitle(metadata);
     const slug = slugify(title);
     const outputPdfPath = path.join(
       outputDir,
@@ -198,7 +203,7 @@ export async function convertMarkdownToPdf(sourceDir, options = {}) {
         indent_size: 2,
         space_in_empty_paren: true,
       });
-      logger.info("⚙️ Generating HTML ", prettyHtml);
+      // logger.info("⚙️ Generating HTML ", prettyHtml);
       continue;
     }
 
@@ -245,6 +250,6 @@ export async function convertMarkdownToPdf(sourceDir, options = {}) {
       fs.writeFileSync(outputPdfPath, pdfBuffer);
     }
 
-    logger.info(`✅ Creating lab guide ${variant.label} in ${outputPdfPath}`);
+    logger.info(`⚙️  Generating PDF ${variant.label} in ${outputPdfPath}`);
   }
 }
