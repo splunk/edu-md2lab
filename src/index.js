@@ -55,7 +55,6 @@ program
           process.exit(1);
         }
       );
-
       await updateMetadataDate(metadataPath, metadata, updatedDate);
     } catch (err) {
       logger.error("Error:", err.stack || err.message || err);

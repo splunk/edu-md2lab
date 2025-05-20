@@ -84,6 +84,8 @@ export async function updateMetadataDate(metadataPath, metadata, updatedDate) {
     metadata.course_id = metadata.course_id.toString().padStart(4, "0");
   }
 
+  metadata.updated = updatedDate;
+
   const newYaml = yaml.dump(metadata);
   await fs.writeFile(metadataPath, newYaml, "utf8");
 
