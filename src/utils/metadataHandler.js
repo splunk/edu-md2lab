@@ -13,6 +13,26 @@ export function getCourseTitle(metadata) {
   }
 }
 
+export function getCourseId(metadata) {
+  try {
+    const courseId = metadata.course_id;
+    return courseId;
+  } catch (err) {
+    logger.error("'course_id' not found in metadata");
+    process.exit(1);
+  }
+}
+
+export function getProductVersion(metadata) {
+  try {
+    const courseId = metadata.version;
+    return courseId;
+  } catch (err) {
+    logger.error("'version' not found in metadata");
+    process.exit(1);
+  }
+}
+
 export function slugify(text) {
   logger.debug(`Slugifying text: "${text}"`);
   return text

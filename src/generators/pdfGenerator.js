@@ -11,7 +11,12 @@ import { dirname } from "path";
 
 import { embedLocalImagesInMarkdown } from "../utils/imageHandler.js";
 
-import { getCourseTitle, slugify } from "../utils/metadataHandler.js";
+import {
+  getCourseTitle,
+  getCourseId,
+  getProductVersion,
+  slugify,
+} from "../utils/metadataHandler.js";
 
 import { getOrderedMarkdownFiles } from "../utils/fileHandler.js";
 
@@ -162,10 +167,12 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
     // const metadata = await loadMetadata(metadataPath);
 
     const title = getCourseTitle(metadata);
+    const courseId = getCourseId(metadata);
+    const productVersion = getProductVersion(metadata);
     const slug = slugify(title);
     const outputPdfPath = path.join(
       outputDir,
-      `${slug}-lab-guide${variant.suffix}.pdf`
+      `${courseId}-${slug}-${productVersion}-lab-guide${variant.suffix}.pdf`
     );
 
     const defaultCssPath = path.join(__dirname, "../styles", "style.css");
@@ -250,6 +257,6 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       fs.writeFileSync(outputPdfPath, pdfBuffer);
     }
 
-    logger.info(`⚙️  Generating PDF ${variant.label} in ${outputPdfPath}`);
+    logger.info(`⚙️  Generating PDF ${variant.label} ${outputPdfPath}`);
   }
 }

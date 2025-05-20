@@ -26,10 +26,10 @@ program
     "Path to the directory containing Markdown files (defaults to current directory)"
     // process.cwd()
   )
-  .option("-H, --html", "Output rendered HTML instead of generating a PDF")
+  .option("-H, --html", "Output HTML instead of generating a PDF")
   .option(
     "-d, --date <date>",
-    "Custom date for 'updated' field in YYYY-MM-DD format"
+    "Use custom date in YYYY-MM-DD format instead of current date"
   )
   .action(async (sourceDir = ".", options) => {
     try {
