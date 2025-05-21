@@ -166,10 +166,23 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
     // const metadataPath = await getMetadataPath(sourceDir);
     // const metadata = await loadMetadata(metadataPath);
 
-    const title = getCourseTitle(metadata);
-    const courseId = getCourseId(metadata);
-    const productVersion = getProductVersion(metadata);
-    const slug = slugify(title);
+    // const courseTitle = getCourseTitle(metadata);
+    // const courseId = getCourseId(metadata);
+    // const productVersion = getProductVersion(metadata);
+
+    let courseId, courseTitle, productVersion;
+
+    try {
+      courseId = getCourseId(metadata);
+      courseTitle = getCourseTitle(metadata);
+      productVersion = getProductVersion(metadata);
+    } catch (err) {
+      logger.error(`Uh oh! ${err.message}`);
+      process.exit(1);
+    }
+
+    const slug = slugify(courseTitle);
+
     const outputPdfPath = path.join(
       outputDir,
       `${courseId}-${slug}-${productVersion}-lab-guide${variant.suffix}.pdf`
@@ -250,7 +263,7 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       const finalBuffer = await addHeadersAndFootersToPdfBuffer(
         pdfBuffer,
         logoPath,
-        title
+        courseTitle
       );
       fs.writeFileSync(outputPdfPath, finalBuffer);
     } else {
