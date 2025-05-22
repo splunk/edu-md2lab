@@ -14,7 +14,7 @@ import { embedLocalImagesInMarkdown } from "../utils/imageHandler.js";
 import {
   getCourseTitle,
   getCourseId,
-  getProductVersion,
+  getVersion,
   slugify,
 } from "../utils/metadataHandler.js";
 
@@ -163,30 +163,29 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       }
     }
 
-    // const metadataPath = await getMetadataPath(sourceDir);
-    // const metadata = await loadMetadata(metadataPath);
-
-    // const courseTitle = getCourseTitle(metadata);
-    // const courseId = getCourseId(metadata);
-    // const productVersion = getProductVersion(metadata);
-
-    let courseId, courseTitle, productVersion;
+    let courseId, courseTitle;
 
     try {
       courseId = getCourseId(metadata);
       courseTitle = getCourseTitle(metadata);
-      productVersion = getProductVersion(metadata);
     } catch (err) {
       logger.error(`Uh oh! ${err.message}`);
       process.exit(1);
     }
 
+    const version = getVersion(metadata);
+
+    if (!version) {
+      logger.info("ℹ️  No 'version' found in metadata. Proceeding without it.");
+    }
+
     const slug = slugify(courseTitle);
 
-    const outputPdfPath = path.join(
-      outputDir,
-      `${courseId}-${slug}-${productVersion}-lab-guide${variant.suffix}.pdf`
-    );
+    const outputTitle = `${courseId}-${slug}${
+      version ? "-" + version : ""
+    }-lab-guide${variant.suffix}.pdf`;
+
+    const outputPdfPath = path.join(outputDir, outputTitle);
 
     const defaultCssPath = path.join(__dirname, "../styles", "style.css");
     const customCssPath = path.join(sourceDir, "custom.css");
@@ -198,7 +197,7 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       const customCss = fs.readFileSync(customCssPath, "utf-8");
       await validateCss(customCss, customCssPath);
       cssContent += "\n\n/* Custom Styles */\n" + customCss;
-      logger.info("🎨 Applying custom.css");
+      logger.info("🎨 Applying custom.css...");
     }
 
     const logoPath = path.join(__dirname, "../assets", "logo-splunk-cisco.png");
