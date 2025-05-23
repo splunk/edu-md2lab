@@ -48,7 +48,7 @@ export async function addHeadersAndFootersToPdfBuffer(
   const imageDims = image.scale(0.25);
 
   const year = new Date().getFullYear();
-  const footerLeft = `© ${year} Splunk Inc. All rights reserved.`;
+  const footerLeft = `© ${year} Splunk LLC. All rights reserved.`;
 
   const marginLeft = 64;
   const marginBottom = 64;
@@ -223,6 +223,7 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
         space_in_empty_paren: true,
       });
       // logger.info("⚙️ Generating HTML ", prettyHtml);
+      console.log(prettyHtml);
       continue;
     }
 

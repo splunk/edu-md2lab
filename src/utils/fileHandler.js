@@ -1,16 +1,30 @@
 import path from "path";
-import fs from "fs";
-// import yaml from "js-yaml";
+import fs from "fs/promises";
 import logger from "../utils/logger.js";
 
-export async function getOrderedMarkdownFiles(sourceDir) {
+export async function validateSourcePath(sourcePath) {
+  const resolvedPath = path.resolve(sourcePath);
   try {
-    logger.debug("Reading directory contents to fetch markdown files.");
+    const stat = await fs.stat(resolvedPath);
+    if (!stat.isDirectory()) {
+      throw new Error(`The path "${resolvedPath}" is not a directory.`);
+    }
+    return resolvedPath;
+  } catch {
+    throw new Error(
+      `Source path is invalid or does not exist: ${resolvedPath}`
+    );
+  }
+}
 
-    const allFiles = await fs.promises.readdir(sourceDir);
+export async function getOrderedMarkdownFiles(sourceDir, log = logger) {
+  try {
+    log.debug("Reading directory contents to fetch markdown files.");
+
+    const allFiles = await fs.readdir(sourceDir);
     const mdFiles = allFiles.filter((f) => f.endsWith(".md"));
 
-    logger.debug(`Found ${mdFiles.length} markdown files.`);
+    log.debug(`Found ${mdFiles.length} markdown files.`);
 
     const intro = mdFiles.find((f) => f.toLowerCase() === "introduction.md");
     const resources = mdFiles.find((f) => f.toLowerCase() === "resources.md");
@@ -22,22 +36,22 @@ export async function getOrderedMarkdownFiles(sourceDir) {
     const ordered = [];
     if (intro) {
       ordered.push(intro);
-      logger.debug("Adding introduction.md to the ordered list.");
+      log.debug("Adding introduction.md to the ordered list.");
     }
     ordered.push(...labFiles);
     if (resources) {
       ordered.push(resources);
-      logger.debug("Adding resources.md to the ordered list.");
+      log.debug("Adding resources.md to the ordered list.");
     }
 
-    logger.info(
+    log.info(
       `🔀 Shuffling Markdown files:\n${ordered
         .map((f) => `  * ${f}`)
         .join("\n")}`
     );
     return ordered.map((f) => path.join(sourceDir, f));
   } catch (err) {
-    logger.error(
+    log.error(
       `Error reading Markdown files in directory ${sourceDir}: ${err.message}`
     );
     throw err;

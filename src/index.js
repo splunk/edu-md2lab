@@ -12,6 +12,7 @@ import {
   getFormattedDate,
 } from "./utils/metadataHandler.js";
 import logger from "./utils/logger.js";
+import { validateSourcePath } from "./utils/fileHandler.js";
 
 const program = new Command();
 
@@ -22,7 +23,7 @@ program
 
 program
   .argument(
-    "[sourceDir]",
+    "[sourcePath]",
     "Path to the directory containing Markdown files (defaults to current directory)"
     // process.cwd()
   )
@@ -31,35 +32,33 @@ program
     "-d, --date <date>",
     "Use custom date in YYYY-MM-DD format instead of current date"
   )
-  .action(async (sourceDir = ".", options) => {
+  .action(async (sourcePath = ".", options) => {
     try {
-      // const resolvedPath = path.resolve(sourceDir);
+      // Validate source path
+      logger.info("Validating source path...");
+      const sourceDir = await validateSourcePath(sourcePath); // Await the result
 
-      if (
-        !fs.existsSync(path.resolve(sourceDir)) ||
-        !fs.lstatSync(path.resolve(sourceDir)).isDirectory()
-      ) {
-        logger.error(`The path "${sourceDir}" is not a valid directory.`);
-        process.exit(1);
-      }
-
-      // Get meta!
+      // Get metadata
       const metadataPath = await getMetadataPath(sourceDir);
       const metadata = await loadMetadata(metadataPath);
 
+      // Update date
       const updatedDate = getFormattedDate(options.date);
 
-      generatePdf(sourceDir, metadata, { outputHtml: options.html }).catch(
-        (err) => {
-          logger.error("Error generating output:", err);
-          process.exit(1);
-        }
-      );
+      // Generate PDF
+      await generatePdf(sourceDir, metadata, {
+        outputHtml: options.html,
+      }).catch((err) => {
+        logger.error("Error generating output:", err);
+        process.exit(1);
+      });
+
+      // Update metadata
       await updateMetadataDate(metadataPath, metadata, updatedDate);
     } catch (err) {
       logger.error("Error:", err.stack || err.message || err);
       console.error(err);
-      process.exit(1);
+      process.exit(1); // Exit the process on error
     }
   });
 
