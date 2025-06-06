@@ -9,10 +9,15 @@ import {
   getMetadataPath,
   loadMetadata,
   updateMetadataDate,
-  getFormattedDate,
+  valiDate,
+  getCourseGA,
 } from "./utils/metadataHandler.js";
 import logger from "./utils/logger.js";
-import { validateSourcePath } from "./utils/fileHandler.js";
+import {
+  isValidDirectory,
+  getLabGuidesPath,
+  // validateSourcePath,
+} from "./utils/fileHandler.js";
 
 const program = new Command();
 
@@ -34,19 +39,44 @@ program
   )
   .action(async (sourcePath = ".", options) => {
     try {
+      // logger.info(" Validating source path...");
+      // const sourceDir = await validateSourcePath(sourcePath);
+
       // Validate source path
-      logger.info("Validating source path...");
-      const sourceDir = await validateSourcePath(sourcePath); // Await the result
+      const valid = await isValidDirectory(sourcePath);
+      if (!valid) {
+        logger.error("Uh oh! Not a valid path!");
+        process.exit();
+      }
+
+      const sourceDir = await getLabGuidesPath(sourcePath);
 
       // Get metadata
-      const metadataPath = await getMetadataPath(sourceDir);
+      const metadataPath = await getMetadataPath(sourcePath);
       const metadata = await loadMetadata(metadataPath);
 
-      // Update date
-      const updatedDate = getFormattedDate(options.date);
+      const [courseGA, warnGA] = getCourseGA(metadata);
+
+      if (warnGA) {
+        logger.warn(warnGA);
+      }
+
+      const currDate = new Date().toISOString().split("T")[0];
+      let datestamp;
+
+      if (options.date) {
+        datestamp = valiDate(options.date);
+        logger.info(`📅 Using custom date for datestamp...`);
+      } else if (courseGA > currDate) {
+        datestamp = courseGA;
+        logger.info(`📅 Using GA date for datestamp...`);
+      } else {
+        datestamp = currDate;
+        logger.info(`📅 Using current date for datestamp...`);
+      }
 
       // Generate PDF
-      await generatePdf(sourceDir, metadata, {
+      await generatePdf(sourceDir, metadata, datestamp, {
         outputHtml: options.html,
       }).catch((err) => {
         logger.error("Error generating output:", err);
@@ -54,11 +84,11 @@ program
       });
 
       // Update metadata
-      await updateMetadataDate(metadataPath, metadata, updatedDate);
+      await updateMetadataDate(metadataPath, metadata, datestamp);
     } catch (err) {
       logger.error("Error:", err.stack || err.message || err);
       console.error(err);
-      process.exit(1); // Exit the process on error
+      process.exit(1);
     }
   });
 

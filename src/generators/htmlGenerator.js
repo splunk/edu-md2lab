@@ -129,3 +129,30 @@ export function stripAnswersBlocks(markdown) {
 export function markdownHasAnswersBlock(content) {
   return /::: *answers/.test(content);
 }
+
+// export function insertDatestamp(fileContent, datestamp) {
+//   fileContent = fileContent.replace(
+//     /^(# .*)$/m,
+//     `$1\n\n<p class="datestamp" style="text-align:right; color: gray">${datestamp}</p>`
+//   );
+
+//   return fileContent;
+// }
+
+export function insertDatestamp(content, datestamp, hasInsertedDatestamp) {
+  // If the datestamp has already been inserted, return the content as is
+  if (hasInsertedDatestamp) {
+    return { content, hasInsertedDatestamp };
+  }
+
+  // Use a regular expression to find the first H1 (e.g., "# Heading")
+  const h1Regex = /^(# )(.*)$/m;
+
+  // Replace the first H1 with the H1 followed by the datestamp
+  const updatedContent = content.replace(h1Regex, (match, hash, heading) => {
+    hasInsertedDatestamp = true;
+    return `${hash}${heading}\n\n<p class="datestamp" style="text-align:right; color: gray">${datestamp}</p>`;
+  });
+
+  return { content: updatedContent, hasInsertedDatestamp };
+}

@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import yaml from "js-yaml";
 import logger from "./logger.js";
+import { parseDocument, stringify } from "yaml";
 
 export function getCourseTitle(metadata) {
   const courseTitle = metadata?.course_title;
@@ -51,6 +52,15 @@ export function getCourseAudience(metadata) {
   return courseAudience;
 }
 
+export function getCourseGA(metadata) {
+  const courseGA = metadata?.ga;
+  if (courseGA === undefined) {
+    return [null, "No 'ga' found in the metadata"];
+  }
+  return [courseGA, null];
+}
+
+// TODO: MOVE TO FILEHANDLER
 export function slugify(text) {
   logger.debug(`Slugifying text: "${text}"`);
   return text
@@ -97,29 +107,46 @@ export async function loadMetadata(metadataPath) {
   return metadata;
 }
 
-export async function updateMetadataDate(metadataPath, metadata, updatedDate) {
+export async function updateMetadataDate(
+  metadataPath,
+  metadata,
+  courseUpdated
+) {
+  const yamlContent = await fs.readFile(metadataPath, "utf8");
+
+  const yamlDoc = parseDocument(yamlContent);
+
   if (metadata.course_id) {
-    metadata.course_id = metadata.course_id.toString().padStart(4, "0");
+    yamlDoc.setIn(
+      ["course_id"],
+      metadata.course_id.toString().padStart(4, "0")
+    );
   }
+  yamlDoc.setIn(["updated"], courseUpdated);
 
-  metadata.updated = updatedDate;
+  const newYaml = stringify(yamlDoc);
 
-  const newYaml = yaml.dump(metadata);
   await fs.writeFile(metadataPath, newYaml, "utf8");
 
-  logger.info(`🏷️  Updating metadata.updated: ${updatedDate}`);
+  logger.info(`🏷️  Updating metadata.updated: ${courseUpdated}`);
 }
 
-export function getFormattedDate(input) {
-  const date = input ? new Date(input) : new Date();
+export function getFormattedDate(dateString) {
+  const date = new Date(dateString + "T00:00:00");
+  return date.toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function valiDate(input) {
+  const date = new Date(input);
 
   if (isNaN(date.getTime())) {
-    logger.error(
-      `Invalid date format. Use YYYY-MM-DD.`,
-      `You entered: ${input}`
+    throw new Error(
+      `Invalid date format. Use YYYY-MM-DD. You entered: ${input}`
     );
-    process.exit(1);
   }
-
   return date.toISOString().split("T")[0];
 }

@@ -1,59 +1,90 @@
 import path from "path";
 import fs from "fs/promises";
-import logger from "../utils/logger.js";
 
-export async function validateSourcePath(sourcePath) {
-  const resolvedPath = path.resolve(sourcePath);
+/**
+ * Checks if the given path is a valid directory.
+ * @param {string} sourcePath - The path to check.
+ * @returns {Promise<boolean>} - Resolves to `true` if it's a valid directory, otherwise `false`.
+ */
+export async function isValidDirectory(sourcePath) {
   try {
+    const resolvedPath = path.resolve(sourcePath);
     const stat = await fs.stat(resolvedPath);
-    if (!stat.isDirectory()) {
-      throw new Error(`The path "${resolvedPath}" is not a directory.`);
-    }
-    return resolvedPath;
+    return stat.isDirectory();
   } catch {
-    throw new Error(
-      `Source path is invalid or does not exist: ${resolvedPath}`
-    );
+    return false;
   }
 }
 
-export async function getOrderedMarkdownFiles(sourceDir, log = logger) {
+/**
+ * Checks if a 'lab-guides' subdirectory exists.
+ * If it exists, returns its path; otherwise, returns the sourcePath.
+ * @param {string} sourcePath - The base directory to check.
+ * @returns {Promise<string>} - The path to 'lab-guides' if it exists, otherwise the sourcePath.
+ */
+export async function getLabGuidesPath(sourcePath) {
   try {
-    log.debug("Reading directory contents to fetch markdown files.");
+    const resolvedPath = path.resolve(sourcePath);
 
+    const labGuidesPath = path.join(resolvedPath, "lab-guides");
+
+    const stat = await fs.stat(labGuidesPath);
+    if (stat.isDirectory()) {
+      return labGuidesPath;
+    }
+  } catch {
+    return sourcePath;
+  }
+}
+
+/**
+ * Orders markdown files.
+ * @param {string} sourceDir - The primary directory containing the markdown files.
+ * @returns {Promise<string[]>} - Array of ordered markdown file paths.
+ * @throws {Error} - If the source directory or 'lab-guides' subdirectory are invalid or do not exist.
+ */
+export async function getOrderedMarkdownFiles(sourceDir) {
+  try {
     const allFiles = await fs.readdir(sourceDir);
+
     const mdFiles = allFiles.filter((f) => f.endsWith(".md"));
 
-    log.debug(`Found ${mdFiles.length} markdown files.`);
-
-    const intro = mdFiles.find((f) => f.toLowerCase() === "introduction.md");
-    const resources = mdFiles.find((f) => f.toLowerCase() === "resources.md");
+    let introFile = mdFiles.find(
+      (f) =>
+        f.toLowerCase() === "introduction.md" ||
+        f.toLowerCase() === "00-introduction.md"
+    );
+    let resourceFile = mdFiles.find(
+      (f) =>
+        f.toLowerCase() === "resources.md" ||
+        /^\d{2}-resources\.md$/.test(f.toLowerCase())
+    );
 
     const labFiles = mdFiles
-      .filter((f) => /^\d{2}-.+\.md$/.test(f))
+      .filter(
+        (f) => f !== introFile && f !== resourceFile && /^\d{2}-.+\.md$/.test(f)
+      )
       .sort((a, b) => parseInt(a) - parseInt(b));
 
     const ordered = [];
-    if (intro) {
-      ordered.push(intro);
-      log.debug("Adding introduction.md to the ordered list.");
-    }
-    ordered.push(...labFiles);
-    if (resources) {
-      ordered.push(resources);
-      log.debug("Adding resources.md to the ordered list.");
+
+    if (introFile) {
+      ordered.push(introFile);
     }
 
-    log.info(
-      `🔀 Shuffling Markdown files:\n${ordered
+    ordered.push(...labFiles);
+
+    if (resourceFile) {
+      ordered.push(resourceFile);
+    }
+
+    console.info(
+      ` 🔀 Shuffling Markdown files:\n${ordered
         .map((f) => `  * ${f}`)
         .join("\n")}`
     );
     return ordered.map((f) => path.join(sourceDir, f));
   } catch (err) {
-    log.error(
-      `Error reading Markdown files in directory ${sourceDir}: ${err.message}`
-    );
-    throw err;
+    throw new Error(`Error processing Markdown files: ${err.message}`);
   }
 }

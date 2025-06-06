@@ -16,11 +16,15 @@ import {
   getCourseId,
   getVersion,
   slugify,
+  getFormattedDate,
 } from "../utils/metadataHandler.js";
 
 import { getOrderedMarkdownFiles } from "../utils/fileHandler.js";
 
-import { validateCss } from "../utils/cssValidator.mjs";
+// TODO: DEBUG
+// import { validateCss } from "../utils/cssValidator.mjs";
+
+import { insertDatestamp } from "./htmlGenerator.js";
 
 import {
   registerContainers,
@@ -34,12 +38,25 @@ import logger from "../utils/logger.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+export async function setPdfMetadata(pdfDoc, metadata = {}) {
+  pdfDoc.setCreator("md2splunk");
+  pdfDoc.setAuthor("Splunk EDU");
+  // USING DEFAULT PRODUCER (pdf-lib)
+  // pdfDoc.setProducer(TODO);
+  if (metadata.course_title) pdfDoc.setTitle(metadata.course_title);
+  if (metadata.ga) pdfDoc.setCreationDate(new Date(metadata.ga));
+  if (metadata.updated) pdfDoc.setModificationDate(new Date(metadata.updated));
+  // TODO: USE UNIQUE SUBJECT?
+  if (metadata.course_title) pdfDoc.setSubject(metadata.course_title);
+}
+
 export async function addHeadersAndFootersToPdfBuffer(
+  pdfDoc,
   pdfBuffer,
   logoPath,
-  courseTitle = ""
+  courseTitle = "",
+  metadata = {}
 ) {
-  const pdfDoc = await PDFDocument.load(pdfBuffer);
   const pages = pdfDoc.getPages();
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
@@ -103,9 +120,15 @@ export async function addHeadersAndFootersToPdfBuffer(
   return await pdfDoc.save();
 }
 
-export async function generatePdf(sourceDir, metadata, options = {}) {
+export async function generatePdf(
+  sourceDir,
+  metadata,
+  datestamp,
+  options = {}
+) {
   const { outputHtml = false, pdfOptions = {} } = options;
-  const outputDir = path.join(sourceDir, "pdfs");
+  // 20250605: removed "pdfs" from outputDir; now using "./lab-guides"
+  const outputDir = path.join(sourceDir, "");
   await fse.ensureDir(outputDir);
   const files = await getOrderedMarkdownFiles(sourceDir);
   if (files.length === 0) {
@@ -137,16 +160,28 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
     });
   }
 
+  let formattedDate = getFormattedDate(datestamp);
+
   for (const variant of renderVariants) {
-    const md = markdownIt();
+    const md = markdownIt({ html: true });
 
     registerContainers(md, { includeAnswers: variant.includeAnswers });
 
     let markdownContent = "";
+    let hasInsertedDatestamp = false;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fileName = path.basename(file, ".md");
       let fileContent = fs.readFileSync(file, "utf-8");
+
+      const result = insertDatestamp(
+        fileContent,
+        formattedDate,
+        hasInsertedDatestamp
+      );
+      fileContent = result.content;
+      hasInsertedDatestamp = result.hasInsertedDatestamp;
 
       if (!variant.includeAnswers) {
         fileContent = stripAnswersBlocks(fileContent);
@@ -191,11 +226,26 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
     const customCssPath = path.join(sourceDir, "custom.css");
 
     let cssContent = fs.readFileSync(defaultCssPath, "utf-8");
-    cssContent = `${cssContent}\n\n/* No syntax highlighting applied */`;
+
+    const fontPath = path.join(
+      __dirname,
+      "../styles/fonts",
+      "SplunkDataSansPro_Rg.ttf"
+    );
+    const fontData = fs.readFileSync(fontPath);
+    const fontBase64 = fontData.toString("base64");
+    const fontFace = `
+@font-face {
+  font-family: "Splunk Data Sans Pro";
+  src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
+}
+`;
+
+    cssContent = `${fontFace}\n\n${cssContent}\n\n/* No syntax highlighting applied */`;
 
     if (fs.existsSync(customCssPath)) {
       const customCss = fs.readFileSync(customCssPath, "utf-8");
-      await validateCss(customCss, customCssPath);
+      // await validateCss(customCss, customCssPath);
       cssContent += "\n\n/* Custom Styles */\n" + customCss;
       logger.info("🎨 Applying custom.css...");
     }
@@ -222,7 +272,6 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
         indent_size: 2,
         space_in_empty_paren: true,
       });
-      // logger.info("⚙️ Generating HTML ", prettyHtml);
       console.log(prettyHtml);
       continue;
     }
@@ -243,6 +292,11 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       timeout: 60000,
     });
 
+    // await page.setContent(fullHtml, {
+    //   waitUntil: "networkidle0", // Or "networkidle2"
+    //   timeout: 60000,
+    // });
+
     const pdfBuffer = await page.pdf({
       format: "letter",
       printBackground: true,
@@ -257,13 +311,18 @@ export async function generatePdf(sourceDir, metadata, options = {}) {
       ...pdfOptions,
     });
 
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
+
     await browser.close();
 
     if (fs.existsSync(logoPath)) {
+      await setPdfMetadata(pdfDoc, metadata);
       const finalBuffer = await addHeadersAndFootersToPdfBuffer(
+        pdfDoc,
         pdfBuffer,
         logoPath,
-        courseTitle
+        courseTitle,
+        metadata
       );
       fs.writeFileSync(outputPdfPath, finalBuffer);
     } else {
