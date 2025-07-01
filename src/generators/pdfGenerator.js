@@ -44,8 +44,10 @@ export async function setPdfMetadata(pdfDoc, metadata = {}) {
   // USING DEFAULT PRODUCER (pdf-lib)
   // pdfDoc.setProducer(TODO);
   if (metadata.course_title) pdfDoc.setTitle(metadata.course_title);
-  if (metadata.ga) pdfDoc.setCreationDate(new Date(metadata.ga));
-  if (metadata.updated) pdfDoc.setModificationDate(new Date(metadata.updated));
+  if (metadata.ga)
+    pdfDoc.setCreationDate(new Date(getFormattedDate(metadata.ga)));
+  if (metadata.updated)
+    pdfDoc.setModificationDate(new Date(getFormattedDate(metadata.updated)));
   // TODO: USE UNIQUE SUBJECT?
   if (metadata.course_title) pdfDoc.setSubject(metadata.course_title);
 }
@@ -90,7 +92,7 @@ export async function addHeadersAndFootersToPdfBuffer(
 
     page.drawText(footerLeft, {
       x: marginLeft,
-      y: 45,
+      y: 32,
       size: 9,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),
@@ -100,7 +102,7 @@ export async function addHeadersAndFootersToPdfBuffer(
     const titleWidth = helveticaFont.widthOfTextAtSize(courseTitle, titleSize);
     page.drawText(courseTitle, {
       x: (width - titleWidth) / 2,
-      y: 45,
+      y: 32,
       size: titleSize,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),

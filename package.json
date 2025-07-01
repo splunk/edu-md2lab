@@ -1,6 +1,6 @@
 {
   "name": "@splunk-edu/md2lab",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Convert Markdown to Splunk EDU course materials.",
   "type": "module",
   "main": "./src/index.js",

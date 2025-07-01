@@ -173,7 +173,7 @@ h6 {
 }
 
 p {
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   line-height: 1.25;
 }
 
@@ -190,6 +190,7 @@ ol {
 
 ul {
   padding-left: 20px;
+  /* page-break-inside: avoid; */
 }
 
 li {
@@ -282,6 +283,7 @@ tbody tr:last-of-type {
   padding: 0;
   padding-top: 8px;
   padding-bottom: 8px;
+  page-break-inside: avoid;
 }
 
 .admonition-title {
@@ -302,6 +304,19 @@ tbody tr:last-of-type {
 .admonition-content {
   flex: 1;
   padding: 8px 8px 8px 0;
+}
+
+.admonition-content>pre { 
+  background-color: #4B4D52;
+  /* background-color: #F4F4F5; */
+  background-color: inherit;
+  /* background-color: transparent; */
+}
+
+.admonition-content>pre>code {
+  /* color: inherit; */
+  /* color: #4B4D52; */
+  color: white;
 }
 
 .admonition.answers {
