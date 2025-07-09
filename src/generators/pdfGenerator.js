@@ -4,7 +4,6 @@ import fse from "fs-extra";
 import puppeteer from "puppeteer";
 import beautifyPkg from "js-beautify";
 const { html: beautify } = beautifyPkg;
-import markdownIt from "markdown-it";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -30,6 +29,7 @@ import {
   registerContainers,
   stripAnswersBlocks,
   markdownHasAnswersBlock,
+  generateHtmlContent,
 } from "./htmlGenerator.js";
 
 import logger from "../utils/logger.js";
@@ -165,40 +165,12 @@ export async function generatePdf(
   let formattedDate = getFormattedDate(datestamp);
 
   for (const variant of renderVariants) {
-    const md = markdownIt({ html: true });
-
-    registerContainers(md, { includeAnswers: variant.includeAnswers });
-
-    let markdownContent = "";
-    let hasInsertedDatestamp = false;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileName = path.basename(file, ".md");
-      let fileContent = fs.readFileSync(file, "utf-8");
-
-      const result = insertDatestamp(
-        fileContent,
-        formattedDate,
-        hasInsertedDatestamp
-      );
-      fileContent = result.content;
-      hasInsertedDatestamp = result.hasInsertedDatestamp;
-
-      if (!variant.includeAnswers) {
-        fileContent = stripAnswersBlocks(fileContent);
-      }
-
-      const htmlContent = md.render(
-        embedLocalImagesInMarkdown(fileContent, sourceDir)
-      );
-
-      markdownContent += `<section class="section" data-file="${fileName}">\n${htmlContent}\n</section>`;
-
-      if (i < files.length - 1) {
-        markdownContent += '<div style="page-break-before: always;"></div>';
-      }
-    }
+    const fullHtml = await generateHtmlContent(
+      files,
+      sourceDir,
+      formattedDate,
+      variant
+    );
 
     let courseId, courseTitle;
 
@@ -223,51 +195,6 @@ export async function generatePdf(
     }-lab-guide${variant.suffix}.pdf`;
 
     const outputPdfPath = path.join(outputDir, outputTitle);
-
-    const defaultCssPath = path.join(__dirname, "../styles", "style.css");
-    const customCssPath = path.join(sourceDir, "custom.css");
-
-    let cssContent = fs.readFileSync(defaultCssPath, "utf-8");
-
-    const fontPath = path.join(
-      __dirname,
-      "../styles/fonts",
-      "SplunkDataSansPro_Rg.ttf"
-    );
-    const fontData = fs.readFileSync(fontPath);
-    const fontBase64 = fontData.toString("base64");
-    const fontFace = `
-@font-face {
-  font-family: "Splunk Data Sans Pro";
-  src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
-}
-`;
-
-    cssContent = `${fontFace}\n\n${cssContent}\n\n/* No syntax highlighting applied */`;
-
-    if (fs.existsSync(customCssPath)) {
-      const customCss = fs.readFileSync(customCssPath, "utf-8");
-      // await validateCss(customCss, customCssPath);
-      cssContent += "\n\n/* Custom Styles */\n" + customCss;
-      logger.info("🎨 Applying custom.css...");
-    }
-
-    const logoPath = path.join(__dirname, "../assets", "logo-splunk-cisco.png");
-
-    const fullHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            ${cssContent}
-          </style>
-        </head>
-        <body>
-          ${markdownContent}
-        </body>
-      </html>
-    `;
 
     if (outputHtml) {
       const prettyHtml = beautify(fullHtml, {
@@ -294,11 +221,6 @@ export async function generatePdf(
       timeout: 60000,
     });
 
-    // await page.setContent(fullHtml, {
-    //   waitUntil: "networkidle0", // Or "networkidle2"
-    //   timeout: 60000,
-    // });
-
     const pdfBuffer = await page.pdf({
       format: "letter",
       printBackground: true,
@@ -316,6 +238,8 @@ export async function generatePdf(
     const pdfDoc = await PDFDocument.load(pdfBuffer);
 
     await browser.close();
+
+    const logoPath = path.join(__dirname, "../assets", "logo-splunk-cisco.png");
 
     if (fs.existsSync(logoPath)) {
       await setPdfMetadata(pdfDoc, metadata);

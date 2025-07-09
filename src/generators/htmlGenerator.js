@@ -1,5 +1,15 @@
 import logger from "../utils/logger.js";
 import container from "markdown-it-container";
+import markdownIt from "markdown-it";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { embedLocalImagesInMarkdown } from "../utils/imageHandler.js";
+
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export function registerContainers(md, { includeAnswers }) {
   const types = [
@@ -155,4 +165,88 @@ export function insertDatestamp(content, datestamp, hasInsertedDatestamp) {
   });
 
   return { content: updatedContent, hasInsertedDatestamp };
+}
+
+export async function generateHtmlContent(
+  files,
+  sourceDir,
+  formattedDate,
+  variant
+) {
+  const md = markdownIt({ html: true });
+  registerContainers(md, { includeAnswers: variant.includeAnswers });
+
+  let markdownContent = "";
+  let hasInsertedDatestamp = false;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const fileName = path.basename(file, ".md");
+    let fileContent = fs.readFileSync(file, "utf-8");
+
+    const result = insertDatestamp(
+      fileContent,
+      formattedDate,
+      hasInsertedDatestamp
+    );
+    fileContent = result.content;
+    hasInsertedDatestamp = result.hasInsertedDatestamp;
+
+    if (!variant.includeAnswers) {
+      fileContent = stripAnswersBlocks(fileContent);
+    }
+
+    const htmlContent = md.render(
+      embedLocalImagesInMarkdown(fileContent, sourceDir)
+    );
+
+    markdownContent += `<section class="section" data-file="${fileName}">\n${htmlContent}\n</section>`;
+
+    if (i < files.length - 1) {
+      markdownContent += '<div style="page-break-before: always;"></div>';
+    }
+  }
+
+  // Generate CSS content
+  const defaultCssPath = path.join(__dirname, "../styles", "style.css");
+  const customCssPath = path.join(sourceDir, "custom.css");
+
+  let cssContent = fs.readFileSync(defaultCssPath, "utf-8");
+
+  const fontPath = path.join(
+    __dirname,
+    "../styles/fonts",
+    "SplunkDataSansPro_Rg.ttf"
+  );
+  const fontData = fs.readFileSync(fontPath);
+  const fontBase64 = fontData.toString("base64");
+  const fontFace = `
+@font-face {
+  font-family: "Splunk Data Sans Pro";
+  src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
+}
+`;
+
+  cssContent = `${fontFace}\n\n${cssContent}\n\n/* No syntax highlighting applied */`;
+
+  if (fs.existsSync(customCssPath)) {
+    const customCss = fs.readFileSync(customCssPath, "utf-8");
+    cssContent += "\n\n/* Custom Styles */\n" + customCss;
+    logger.info("🎨 Applying custom.css...");
+  }
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          ${cssContent}
+        </style>
+      </head>
+      <body>
+        ${markdownContent}
+      </body>
+    </html>
+  `;
 }
