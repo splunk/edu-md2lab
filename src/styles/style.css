@@ -309,7 +309,7 @@ tbody tr:last-of-type {
 .admonition-content>pre { 
   background-color: #4B4D52;
   /* background-color: #F4F4F5; */
-  background-color: inherit;
+  /* background-color: inherit; */
   /* background-color: transparent; */
 }
 

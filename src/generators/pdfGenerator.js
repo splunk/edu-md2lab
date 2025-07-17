@@ -76,6 +76,7 @@ export async function addHeadersAndFootersToPdfBuffer(
   pages.forEach((page, index) => {
     const { width, height } = page.getSize();
 
+    // Draw logo
     page.drawImage(image, {
       x: marginLeft,
       y: height - imageDims.height - 32,
@@ -83,6 +84,7 @@ export async function addHeadersAndFootersToPdfBuffer(
       height: imageDims.height,
     });
 
+    // Draw header line
     page.drawLine({
       start: { x: marginLeft, y: height - marginTop + 5 },
       end: { x: width - marginLeft, y: height - marginTop + 5 },
@@ -90,6 +92,7 @@ export async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.8, 0.8, 0.8),
     });
 
+    // Draw footer copyright
     page.drawText(footerLeft, {
       x: marginLeft,
       y: 32,
@@ -98,6 +101,7 @@ export async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.5, 0.5, 0.5),
     });
 
+    // Draw course title in center
     const titleSize = 9;
     const titleWidth = helveticaFont.widthOfTextAtSize(courseTitle, titleSize);
     page.drawText(courseTitle, {
@@ -108,11 +112,12 @@ export async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.5, 0.5, 0.5),
     });
 
+    // Draw page number
     const pageNumText = `${index + 1}`;
     const textWidth = helveticaFont.widthOfTextAtSize(pageNumText, 9);
     page.drawText(pageNumText, {
       x: width - textWidth - marginLeft,
-      y: 45,
+      y: 32,
       size: 9,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),
