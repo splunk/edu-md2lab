@@ -101,6 +101,8 @@ export async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.5, 0.5, 0.5),
     });
 
+    // ...existing code...
+
     // Calculate available space for course title
     const copyrightWidth = helveticaFont.widthOfTextAtSize(footerLeft, 9);
     const pageNumText = `${index + 1}`;
@@ -113,31 +115,92 @@ export async function addHeadersAndFootersToPdfBuffer(
       (marginLeft + copyrightWidth + padding) -
       (pageNumWidth + marginLeft + padding);
 
-    // Truncate title if necessary
-    let displayTitle = courseTitle;
-    let titleWidth = helveticaFont.widthOfTextAtSize(displayTitle, 9);
+    // Function to wrap text into multiple lines
+    function wrapText(text, maxWidth, font, fontSize) {
+      const words = text.split(" ");
+      const lines = [];
+      let currentLine = "";
 
-    if (titleWidth > availableWidth) {
-      // Truncate and add ellipsis
-      while (titleWidth > availableWidth && displayTitle.length > 3) {
-        displayTitle = displayTitle.slice(0, -1);
-        titleWidth = helveticaFont.widthOfTextAtSize(displayTitle + "...", 9);
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+        if (testWidth <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            // Single word is too long, truncate it
+            let truncatedWord = word;
+            while (
+              font.widthOfTextAtSize(truncatedWord + "...", fontSize) >
+                maxWidth &&
+              truncatedWord.length > 1
+            ) {
+              truncatedWord = truncatedWord.slice(0, -1);
+            }
+            lines.push(truncatedWord + "...");
+            currentLine = "";
+          }
+        }
       }
-      displayTitle += "...";
-      titleWidth = helveticaFont.widthOfTextAtSize(displayTitle, 9);
+
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+
+      return lines;
     }
 
-    // Draw course title in center of available space
-    const titleStartX = marginLeft + copyrightWidth + padding;
-    const titleCenterX = titleStartX + (availableWidth - titleWidth) / 2;
+    // Wrap the course title
+    const titleLines = wrapText(courseTitle, availableWidth, helveticaFont, 9);
+    const maxLines = 2; // Limit to 2 lines to avoid taking too much space
+    const displayLines = titleLines.slice(0, maxLines);
 
-    page.drawText(displayTitle, {
-      x: titleCenterX,
-      y: 32,
-      size: 9,
-      font: helveticaFont,
-      color: rgb(0.5, 0.5, 0.5),
+    // If we truncated lines, add ellipsis to the last line
+    if (titleLines.length > maxLines) {
+      const lastLine = displayLines[displayLines.length - 1];
+      const ellipsisLine = lastLine + "...";
+      const ellipsisWidth = helveticaFont.widthOfTextAtSize(ellipsisLine, 9);
+
+      if (ellipsisWidth <= availableWidth) {
+        displayLines[displayLines.length - 1] = ellipsisLine;
+      } else {
+        // Truncate the last line to fit with ellipsis
+        let truncatedLine = lastLine;
+        while (
+          helveticaFont.widthOfTextAtSize(truncatedLine + "...", 9) >
+            availableWidth &&
+          truncatedLine.length > 1
+        ) {
+          truncatedLine = truncatedLine.slice(0, -1);
+        }
+        displayLines[displayLines.length - 1] = truncatedLine + "...";
+      }
+    }
+
+    // Draw wrapped course title lines
+    const lineHeight = 12; // Space between lines
+    const totalTextHeight = (displayLines.length - 1) * lineHeight;
+    const startY = 32 + totalTextHeight / 2; // Center vertically around baseline
+
+    displayLines.forEach((line, lineIndex) => {
+      const lineWidth = helveticaFont.widthOfTextAtSize(line, 9);
+      const titleStartX = marginLeft + copyrightWidth + padding;
+      const titleCenterX = titleStartX + (availableWidth - lineWidth) / 2;
+
+      page.drawText(line, {
+        x: titleCenterX,
+        y: startY - lineIndex * lineHeight,
+        size: 9,
+        font: helveticaFont,
+        color: rgb(0.5, 0.5, 0.5),
+      });
     });
+
+    // ...existing code...
 
     // Draw page number
     page.drawText(pageNumText, {
