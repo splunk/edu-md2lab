@@ -189,10 +189,12 @@ export async function addHeadersAndFootersToPdfBuffer(
     displayLines.forEach((line, lineIndex) => {
       const lineWidth = helveticaFont.widthOfTextAtSize(line, 9);
       const titleStartX = marginLeft + copyrightWidth + padding;
-      const titleCenterX = titleStartX + (availableWidth - lineWidth) / 2;
+
+      // Right-justify: align to the right edge of available space
+      const titleRightX = titleStartX + availableWidth - lineWidth;
 
       page.drawText(line, {
-        x: titleCenterX,
+        x: titleRightX,
         y: startY - lineIndex * lineHeight,
         size: 9,
         font: helveticaFont,
