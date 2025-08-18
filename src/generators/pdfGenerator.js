@@ -101,22 +101,47 @@ export async function addHeadersAndFootersToPdfBuffer(
       color: rgb(0.5, 0.5, 0.5),
     });
 
-    // Draw course title in center
-    const titleSize = 9;
-    const titleWidth = helveticaFont.widthOfTextAtSize(courseTitle, titleSize);
-    page.drawText(courseTitle, {
-      x: (width - titleWidth) / 2,
+    // Calculate available space for course title
+    const copyrightWidth = helveticaFont.widthOfTextAtSize(footerLeft, 9);
+    const pageNumText = `${index + 1}`;
+    const pageNumWidth = helveticaFont.widthOfTextAtSize(pageNumText, 9);
+
+    // Available space for title (with some padding)
+    const padding = 20; // 20 points padding on each side
+    const availableWidth =
+      width -
+      (marginLeft + copyrightWidth + padding) -
+      (pageNumWidth + marginLeft + padding);
+
+    // Truncate title if necessary
+    let displayTitle = courseTitle;
+    let titleWidth = helveticaFont.widthOfTextAtSize(displayTitle, 9);
+
+    if (titleWidth > availableWidth) {
+      // Truncate and add ellipsis
+      while (titleWidth > availableWidth && displayTitle.length > 3) {
+        displayTitle = displayTitle.slice(0, -1);
+        titleWidth = helveticaFont.widthOfTextAtSize(displayTitle + "...", 9);
+      }
+      displayTitle += "...";
+      titleWidth = helveticaFont.widthOfTextAtSize(displayTitle, 9);
+    }
+
+    // Draw course title in center of available space
+    const titleStartX = marginLeft + copyrightWidth + padding;
+    const titleCenterX = titleStartX + (availableWidth - titleWidth) / 2;
+
+    page.drawText(displayTitle, {
+      x: titleCenterX,
       y: 32,
-      size: titleSize,
+      size: 9,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),
     });
 
     // Draw page number
-    const pageNumText = `${index + 1}`;
-    const textWidth = helveticaFont.widthOfTextAtSize(pageNumText, 9);
     page.drawText(pageNumText, {
-      x: width - textWidth - marginLeft,
+      x: width - pageNumWidth - marginLeft,
       y: 32,
       size: 9,
       font: helveticaFont,
