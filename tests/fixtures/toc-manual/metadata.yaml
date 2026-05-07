@@ -1,0 +1,13 @@
+course_id: 'toc-manual'
+course_title: Testing table of content with manual override
+version: 1.0.0
+format: Instructor-led training with labs
+duration: 9 hrs.
+audience:
+  - Splunk administrators
+  - Splunk administrators
+  - Splunk administrators
+ga: '2025-08-11'
+updated: '2026-05-07'
+output:
+  - lab
