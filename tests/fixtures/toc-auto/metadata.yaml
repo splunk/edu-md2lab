@@ -1,13 +1,13 @@
-course_id: 'toc-one'
-course_title: Testing table of content with one file
+course_id: 'toc-auto'
+course_title: Testing table of content with automatic generation
 version: 1.0.0
 format: Instructor-led training with labs
 duration: 9 hrs.
 audience:
-  - Splunk administrators
-  - Splunk administrators
-  - Splunk administrators
+    - Splunk administrators
+    - Splunk administrators
+    - Splunk administrators
 ga: '2025-08-11'
-updated: '2026-05-07'
+updated: '2026-01-12'
 output:
-  - lab
+    - lab
