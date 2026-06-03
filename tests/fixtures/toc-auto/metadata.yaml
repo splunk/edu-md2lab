@@ -4,10 +4,10 @@ version: 1.0.0
 format: Instructor-led training with labs
 duration: 9 hrs.
 audience:
-    - Splunk administrators
-    - Splunk administrators
-    - Splunk administrators
+  - Splunk administrators
+  - Splunk administrators
+  - Splunk administrators
 ga: '2025-08-11'
-updated: '2026-01-12'
+updated: '2026-06-03'
 output:
-    - lab
+  - lab
