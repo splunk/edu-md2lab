@@ -3,14 +3,9 @@ import container from 'markdown-it-container';
 import markdownIt from 'markdown-it';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
 import { processToc, headingToAnchor } from '../utils/tocGenerator.js';
-
-// ESM-compatible __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { loadThemeCss } from '../utils/loadTheme.js';
 
 export function registerContainers(md, { includeAnswers }) {
     const types = [
@@ -168,7 +163,13 @@ export function insertDatestamp(content, datestamp, hasInsertedDatestamp) {
     return { content: updatedContent, hasInsertedDatestamp };
 }
 
-export async function generateHtmlContent(files, sourceDir, formattedDate, variant) {
+export async function generateHtmlContent(
+    files,
+    sourceDir,
+    formattedDate,
+    variant,
+    themeName = 'splunk-edu',
+) {
     const md = markdownIt({ html: true });
 
     // Add IDs to headings for anchor links
@@ -217,24 +218,10 @@ export async function generateHtmlContent(files, sourceDir, formattedDate, varia
         }
     }
 
-    // Generate CSS content
-    const defaultCssPath = path.join(__dirname, '../styles', 'style.css');
+    // Load theme CSS (all fonts embedded as base64 data URIs)
+    let cssContent = loadThemeCss(themeName);
+
     const customCssPath = path.join(sourceDir, 'custom.css');
-
-    let cssContent = fs.readFileSync(defaultCssPath, 'utf-8');
-
-    const fontPath = path.join(__dirname, '../styles/fonts', 'SplunkDataSansPro_Rg.ttf');
-    const fontData = fs.readFileSync(fontPath);
-    const fontBase64 = fontData.toString('base64');
-    const fontFace = `
-@font-face {
-  font-family: "Splunk Data Sans Pro";
-  src: url(data:font/truetype;charset=utf-8;base64,${fontBase64}) format('truetype');
-}
-`;
-
-    cssContent = `${fontFace}\n\n${cssContent}\n\n/* No syntax highlighting applied */`;
-
     if (fs.existsSync(customCssPath)) {
         const customCss = fs.readFileSync(customCssPath, 'utf-8');
         cssContent += '\n\n/* Custom Styles */\n' + customCss;

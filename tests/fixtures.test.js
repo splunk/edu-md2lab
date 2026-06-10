@@ -36,19 +36,25 @@ describe('TOC Generator', () => {
 
     describe('extractFirstH1', () => {
         it('extracts H1 from toc-auto introduction', () => {
-            const filePath = path.join(__dirname, 'fixtures/toc-auto/00-introduction.md');
+            const filePath = path.join(
+                __dirname,
+                'fixtures/toc-auto/lab-guides/00-introduction.md',
+            );
             const h1 = extractFirstH1(filePath);
             expect(h1).toBe('Testing table of contents with automatic generation');
         });
 
         it('extracts H1 from toc-auto chapter 1', () => {
-            const filePath = path.join(__dirname, 'fixtures/toc-auto/01-testing.md');
+            const filePath = path.join(__dirname, 'fixtures/toc-auto/lab-guides/01-testing.md');
             const h1 = extractFirstH1(filePath);
             expect(h1).toBe('Lab exercise 1: Generating a TOC');
         });
 
         it('extracts H1 from toc-manual introduction', () => {
-            const filePath = path.join(__dirname, 'fixtures/toc-manual/00-introduction.md');
+            const filePath = path.join(
+                __dirname,
+                'fixtures/toc-manual/lab-guides/00-introduction.md',
+            );
             const h1 = extractFirstH1(filePath);
             expect(h1).toBe('Testing table of contents with manual override');
         });
@@ -79,8 +85,8 @@ describe('TOC Generator', () => {
     describe('generateTocLinks', () => {
         it("generates TOC links from files with 'Introduction' for first file", () => {
             const files = [
-                path.join(__dirname, 'fixtures/toc-auto/00-introduction.md'),
-                path.join(__dirname, 'fixtures/toc-auto/01-testing.md'),
+                path.join(__dirname, 'fixtures/toc-auto/lab-guides/00-introduction.md'),
+                path.join(__dirname, 'fixtures/toc-auto/lab-guides/01-testing.md'),
             ];
 
             const toc = generateTocLinks(files);
@@ -98,8 +104,14 @@ describe('TOC Generator', () => {
 
     describe('processToc - Auto-generation', () => {
         it('auto-generates TOC when section is empty', () => {
-            const introPath = path.join(__dirname, 'fixtures/toc-auto/00-introduction.md');
-            const files = [introPath, path.join(__dirname, 'fixtures/toc-auto/01-testing.md')];
+            const introPath = path.join(
+                __dirname,
+                'fixtures/toc-auto/lab-guides/00-introduction.md',
+            );
+            const files = [
+                introPath,
+                path.join(__dirname, 'fixtures/toc-auto/lab-guides/01-testing.md'),
+            ];
 
             const content = fs.readFileSync(introPath, 'utf-8');
             const processed = processToc(content, files);
@@ -114,8 +126,14 @@ describe('TOC Generator', () => {
 
     describe('processToc - Manual override', () => {
         it('preserves manual TOC content', () => {
-            const introPath = path.join(__dirname, 'fixtures/toc-manual/00-introduction.md');
-            const files = [introPath, path.join(__dirname, 'fixtures/toc-manual/01-testing.md')];
+            const introPath = path.join(
+                __dirname,
+                'fixtures/toc-manual/lab-guides/00-introduction.md',
+            );
+            const files = [
+                introPath,
+                path.join(__dirname, 'fixtures/toc-manual/lab-guides/01-testing.md'),
+            ];
 
             const content = fs.readFileSync(introPath, 'utf-8');
             const processed = processToc(content, files);

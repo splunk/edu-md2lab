@@ -1,0 +1,6 @@
+{
+    "input": {
+        "courseDescription": "./custom-filename.md",
+        "lab-guide": ["./dir01/", "./dir02/manifest.json"]
+    }
+}

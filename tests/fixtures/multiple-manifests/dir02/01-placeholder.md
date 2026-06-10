@@ -1,17 +1,8 @@
-# Testing table of content with one file
-
-## Table of contents
-
-* [Second-level header](#second-level-header)
-* [Third-level header](#third-level-header)
-* [Fourth-level header](#fourth-level-header)
-* [Fifth-level header](#fifth-level-header)
-
+# Lab exercise 1: Holding place
 
 ## Second-level header
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
 
 ### Third-level header
 

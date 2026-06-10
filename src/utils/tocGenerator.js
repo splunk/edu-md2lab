@@ -45,7 +45,7 @@ export function hasTocContent(content) {
 
     const tocContent = match[1].trim();
     // Check if there's any list content (starts with * or -)
-    return /^\s*[\*\-]\s+/m.test(tocContent);
+    return /^\s*[*-]\s+/m.test(tocContent);
 }
 
 /**

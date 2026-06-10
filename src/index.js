@@ -1,93 +1,53 @@
-#!/usr/bin/env node
+import path from 'path';
+import { isValidDirectory } from './utils/fileHandler.js';
+import { Context } from './context.js';
+import { Pipeline } from './pipeline.js';
 
-import fs from "fs";
-import path from "path";
-import { Command } from "commander";
+import { LoadStage } from './stages/10-load.js';
+import { DiscoverStage } from './stages/20-discover.js';
+import { ValidateStage } from './stages/30-validate.js';
+import { ConvertStage } from './stages/40-convert.js';
+import { BuildStage } from './stages/50-build.js';
 
-import { generatePdf } from "./generators/pdfGenerator.js";
-import {
-  getMetadataPath,
-  loadMetadata,
-  updateMetadataDate,
-  valiDate,
-  getCourseGA,
-} from "./utils/metadataHandler.js";
-import logger from "./utils/logger.js";
-import {
-  isValidDirectory,
-  getLabGuidesPath,
-  // validateSourcePath,
-} from "./utils/fileHandler.js";
+/**
+ * Generate a lab guide PDF (or HTML) from a source directory.
+ *
+ * @param {string} sourcePath - Path to the course directory (may contain lab-guides subdir)
+ * @param {object} options
+ * @param {boolean} [options.html]    - Output HTML to stdout instead of generating a PDF
+ * @param {string}  [options.date]    - Override datestamp (YYYY-MM-DD)
+ * @param {string}  [options.theme]   - Override theme name
+ */
+export async function generateLabGuide(sourcePath = '.', options = {}) {
+    const resolvedPath = path.resolve(sourcePath);
 
-const program = new Command();
-
-async function processCommand(sourcePath = ".", options) {
-  try {
-    // Validate source path
-    const valid = await isValidDirectory(sourcePath);
+    const valid = await isValidDirectory(resolvedPath);
     if (!valid) {
-      logger.error("Uh oh! Not a valid path!");
-      process.exit();
+        throw new Error(`Not a valid directory: ${resolvedPath}`);
     }
 
-    const sourceDir = await getLabGuidesPath(sourcePath);
+    const context = new Context({ sourceDir: resolvedPath, ...options });
 
-    // Get metadata
-    const metadataPath = await getMetadataPath(sourcePath);
-    const metadata = await loadMetadata(metadataPath);
-
-    const [courseGA, warnGA] = getCourseGA(metadata);
-
-    if (warnGA) {
-      logger.warn(warnGA);
-    }
-
-    const currDate = new Date().toISOString().split("T")[0];
-    let datestamp;
-
-    if (options.date) {
-      datestamp = valiDate(options.date);
-      logger.info(`📅 Using custom date for datestamp...`);
-    } else if (courseGA > currDate) {
-      datestamp = courseGA;
-      logger.info(`📅 Using GA date for datestamp...`);
+    let stages;
+    if (options.html) {
+        stages = [
+            new LoadStage(),
+            new DiscoverStage(),
+            new ValidateStage(),
+            new ConvertStage(),
+            new BuildStage(),
+        ];
     } else {
-      datestamp = currDate;
-      logger.info(`📅 Using current date for datestamp...`);
+        stages = [
+            new LoadStage(),
+            new DiscoverStage(),
+            new ValidateStage(),
+            new ConvertStage(),
+            new BuildStage(),
+        ];
     }
 
-    // Generate PDF
-    await generatePdf(sourceDir, metadata, datestamp, {
-      outputHtml: options.html,
-    }).catch((err) => {
-      logger.error("Error generating output:", err);
-      process.exit(1);
-    });
-
-    // Update metadata
-    await updateMetadataDate(metadataPath, metadata, datestamp);
-  } catch (err) {
-    logger.error("Error:", err.stack || err.message || err);
-    console.error(err);
-    process.exit(1);
-  }
+    const pipeline = new Pipeline(stages);
+    await pipeline.run(context);
+    return context;
 }
-
-program
-  .name("md2lab")
-  .description("Convert Markdown into a styled PDF.")
-  .version("1.0.0");
-
-program
-  .argument(
-    "[sourcePath]",
-    "Path to the directory containing Markdown files (defaults to current directory)"
-  )
-  .option("-H, --html", "Output HTML instead of generating a PDF")
-  .option(
-    "-d, --date <date>",
-    "Use custom date in YYYY-MM-DD format instead of current date"
-  )
-  .action(processCommand);
-
-program.parse();

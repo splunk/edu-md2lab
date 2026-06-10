@@ -1,6 +1,6 @@
 metadata:
-    courseId: toc-manual
-    courseTitle: Testing table of content with manual override
+    courseId: custom-output
+    courseTitle: Testing custom output
     version: 1.0.0
     format: Instructor-led training with labs
     duration: 9 hrs.
@@ -9,4 +9,4 @@ metadata:
         - Splunk administrators
         - Splunk administrators
     ga: '2025-08-11'
-    updated: '2026-05-07'
+    updated: '2026-06-05'

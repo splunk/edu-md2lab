@@ -1,37 +1,60 @@
 {
-  "name": "@splunk-edu/md2lab",
-  "version": "1.0.12",
-  "description": "Convert Markdown to Splunk EDU course materials.",
-  "type": "module",
-  "main": "./src/index.js",
-  "bin": {
-    "md2lab": "./src/index.js"
-  },
-  "scripts": {
-    "start": "node ./src/index.js",
-    "test": "vitest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/splunk/edu-md2lab.git"
-  },
-  "author": "Splunk EDU",
-  "license": "UNLICENSED",
-  "dependencies": {
-    "commander": "^13.1.0",
-    "fs-extra": "^11.3.0",
-    "js-beautify": "^1.15.4",
-    "js-yaml": "^4.1.0",
-    "markdown-it": "^14.1.0",
-    "markdown-it-container": "^4.0.0",
-    "pdf-lib": "^1.17.1",
-    "puppeteer": "^25.0.0",
-    "sharp": "^0.34.1",
-    "stylelint": "^16.19.1",
-    "stylelint-config-standard": "^38.0.0",
-    "yaml": "^2.8.0"
-  },
-  "devDependencies": {
-    "vitest": "^4.1.5"
-  }
+    "name": "@splunk-edu/md2lab",
+    "version": "1.0.12",
+    "description": "Convert Markdown lab guides to styled PDFs.",
+    "type": "module",
+    "main": "./src/index.js",
+    "bin": {
+        "md2lab": "./bin/md2lab.js"
+    },
+    "scripts": {
+        "start": "node ./bin/md2lab.js",
+        "test": "vitest run",
+        "coverage": "vitest run --coverage",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "prepare": "husky"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/splunk/edu-md2lab.git"
+    },
+    "author": "Splunk EDU",
+    "license": "UNLICENSED",
+    "dependencies": {
+        "ajv": "^8.20.0",
+        "commander": "^13.1.0",
+        "fs-extra": "^11.3.0",
+        "js-beautify": "^1.15.4",
+        "js-yaml": "^4.1.0",
+        "markdown-it": "^14.1.0",
+        "markdown-it-container": "^4.0.0",
+        "pdf-lib": "^1.17.1",
+        "puppeteer": "^25.0.0",
+        "sharp": "^0.34.1",
+        "stylelint": "^16.19.1",
+        "stylelint-config-standard": "^38.0.0",
+        "yaml": "^2.8.0"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^20.4.2",
+        "@commitlint/config-conventional": "^20.4.2",
+        "@eslint/js": "^10.0.1",
+        "@vitest/coverage-v8": "^4.0.18",
+        "eslint": "^10.0.0",
+        "globals": "^17.3.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.2.7",
+        "prettier": "^3.8.1",
+        "vitest": "^4.1.5"
+    },
+    "lint-staged": {
+        "*.js": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,yaml,yml,md,css}": [
+            "prettier --write"
+        ]
+    }
 }

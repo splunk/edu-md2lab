@@ -1,4 +1,4 @@
-import path from 'path';
+import path, { dirname } from 'path';
 import fs from 'fs';
 import fse from 'fs-extra';
 import puppeteer from 'puppeteer';
@@ -6,9 +6,6 @@ import beautifyPkg from 'js-beautify';
 const { html: beautify } = beautifyPkg;
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
 
 import {
     getCourseTitle,
@@ -20,17 +17,7 @@ import {
 
 import { getOrderedMarkdownFiles } from '../utils/fileHandler.js';
 
-// TODO: DEBUG
-// import { validateCss } from "../utils/cssValidator.mjs";
-
-import { insertDatestamp } from './htmlGenerator.js';
-
-import {
-    registerContainers,
-    stripAnswersBlocks,
-    markdownHasAnswersBlock,
-    generateHtmlContent,
-} from './htmlGenerator.js';
+import { markdownHasAnswersBlock, generateHtmlContent } from './htmlGenerator.js';
 
 import logger from '../utils/logger.js';
 
@@ -88,13 +75,56 @@ function getPuppeteerLaunchOptions() {
 export async function setPdfMetadata(pdfDoc, metadata = {}) {
     pdfDoc.setCreator('md2splunk');
     pdfDoc.setAuthor('Splunk EDU');
-    // USING DEFAULT PRODUCER (pdf-lib)
-    // pdfDoc.setProducer(TODO);
-    if (metadata.course_title) pdfDoc.setTitle(metadata.course_title);
+    // Support both new schema (courseTitle) and legacy (course_title)
+    const title = metadata.courseTitle || metadata.course_title;
+    if (title) pdfDoc.setTitle(title);
     if (metadata.ga) pdfDoc.setCreationDate(new Date(getFormattedDate(metadata.ga)));
     if (metadata.updated) pdfDoc.setModificationDate(new Date(getFormattedDate(metadata.updated)));
-    // TODO: USE UNIQUE SUBJECT?
-    if (metadata.course_title) pdfDoc.setSubject(metadata.course_title);
+    if (title) pdfDoc.setSubject(title);
+}
+
+/**
+ * Renders an HTML string to a PDF buffer using Puppeteer.
+ * Extracted from generatePdf for use in the pipeline Build stage.
+ */
+export async function renderHtmlToPdf(html, pdfOptions = {}) {
+    let browser;
+    try {
+        const launchOptions = getPuppeteerLaunchOptions();
+        browser = await puppeteer.launch(launchOptions);
+    } catch (err) {
+        logger.error('Failed to launch Puppeteer.');
+        logger.error(
+            'Install a browser before running PDF generation (e.g.: npx puppeteer browsers install chrome).',
+        );
+        logger.error(
+            'If Chrome is installed in a custom location, set PUPPETEER_EXECUTABLE_PATH to that binary.',
+        );
+        throw err;
+    }
+
+    const page = await browser.newPage();
+    await page.setContent(html, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+    });
+
+    const buffer = await page.pdf({
+        format: 'letter',
+        printBackground: true,
+        margin: {
+            top: '1in',
+            bottom: '0.75in',
+            left: '.64in',
+            right: '.64in',
+        },
+        preferCSSPageSize: true,
+        scale: 0.9,
+        ...pdfOptions,
+    });
+
+    await browser.close();
+    return buffer;
 }
 
 export async function addHeadersAndFootersToPdfBuffer(
@@ -102,7 +132,7 @@ export async function addHeadersAndFootersToPdfBuffer(
     pdfBuffer,
     logoPath,
     courseTitle = '',
-    metadata = {},
+    _metadata = {},
 ) {
     const pages = pdfDoc.getPages();
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -115,7 +145,6 @@ export async function addHeadersAndFootersToPdfBuffer(
     const footerLeft = `© ${year} Splunk LLC. All rights reserved.`;
 
     const marginLeft = 64;
-    const marginBottom = 64;
     const marginTop = 72;
 
     pages.forEach((page, index) => {
@@ -289,7 +318,7 @@ export async function generatePdf(sourceDir, metadata, datestamp, options = {}) 
         });
     }
 
-    let formattedDate = getFormattedDate(datestamp);
+    const formattedDate = getFormattedDate(datestamp);
 
     for (const variant of renderVariants) {
         const fullHtml = await generateHtmlContent(files, sourceDir, formattedDate, variant);
@@ -327,49 +356,18 @@ export async function generatePdf(sourceDir, metadata, datestamp, options = {}) 
             continue;
         }
 
-        let browser;
-        try {
-            const launchOptions = getPuppeteerLaunchOptions();
-            browser = await puppeteer.launch(launchOptions);
-        } catch (err) {
-            logger.error('Failed to launch Puppeteer.');
-            logger.error(
-                'Install a browser before running PDF generation (for example: npx puppeteer browsers install chrome).',
-            );
-            logger.error(
-                'If Chrome is installed in a custom location, set PUPPETEER_EXECUTABLE_PATH to that binary.',
-            );
-            logger.error(
-                'In CI, also ensure the browser cache path is writable or use a system Chrome path.',
-            );
-            throw err;
-        }
-
-        const page = await browser.newPage();
-        await page.setContent(fullHtml, {
-            waitUntil: 'domcontentloaded',
-            timeout: 60000,
-        });
-
-        const pdfBuffer = await page.pdf({
-            format: 'letter',
-            printBackground: true,
-            margin: {
-                top: '1in',
-                bottom: '0.75in',
-                left: '.64in',
-                right: '.64in',
-            },
-            preferCSSPageSize: true,
-            scale: 0.9,
-            ...pdfOptions,
-        });
+        const pdfBuffer = await renderHtmlToPdf(fullHtml, pdfOptions);
 
         const pdfDoc = await PDFDocument.load(pdfBuffer);
 
-        await browser.close();
-
-        const logoPath = path.join(__dirname, '../assets', 'logo-splunk-cisco.png');
+        // Try theme asset first, then legacy fallback
+        const themeLogoPath = path.join(
+            __dirname,
+            '../../themes/splunk-edu/assets',
+            'logo-splunk-cisco.png',
+        );
+        const legacyLogoPath = path.join(__dirname, '../assets', 'logo-splunk-cisco.png');
+        const logoPath = fs.existsSync(themeLogoPath) ? themeLogoPath : legacyLogoPath;
 
         if (fs.existsSync(logoPath)) {
             await setPdfMetadata(pdfDoc, metadata);
