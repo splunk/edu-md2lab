@@ -45,15 +45,25 @@ export class BuildStage extends Stage {
             const logoFile = themeConfig?.header?.logo;
             const logoPath = logoFile ? getThemeAssetPath(context.theme, logoFile) : null;
 
-            // Resolve output directory
-            const outputDir = context.manifest?.output?.destination
-                ? path.join(context.sourceDir, context.manifest.output.destination)
-                : path.join(context.sourceDir, 'dist');
+            // Resolve output directory: CLI > manifest > default
+            const outputDir = context.options.output
+                ? path.resolve(context.options.output)
+                : context.manifest?.output?.destination
+                  ? path.join(context.sourceDir, context.manifest.output.destination)
+                  : path.join(context.sourceDir, 'dist');
 
             fs.mkdirSync(outputDir, { recursive: true });
 
             for (const { html, variant } of context.htmlVariants) {
-                const outputFilename = `${courseId}-${slug}${version ? '-' + version : ''}-lab-guide${variant.suffix}.pdf`;
+                const customName = context.manifest?.output?.pdfs?.labGuide;
+                let outputFilename;
+                if (customName) {
+                    const ext = path.extname(customName) || '.pdf';
+                    const base = path.basename(customName, ext);
+                    outputFilename = `${base}${variant.suffix}${ext}`;
+                } else {
+                    outputFilename = `${courseId}-${slug}${version ? '-' + version : ''}-lab-guide${variant.suffix}.pdf`;
+                }
                 const outputPdfPath = path.join(outputDir, outputFilename);
 
                 const pdfBuffer = await renderHtmlToPdf(html);

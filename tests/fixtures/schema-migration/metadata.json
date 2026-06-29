@@ -1,0 +1,29 @@
+{
+    "metadata": {
+        "courseId": "1001",
+        "courseTitle": "Splunk Cloud Administration",
+        "slug": "schema_migration",
+        "description": "Learn to administer Splunk Cloud environments.",
+        "courseDeveloper": ["Splunk EDU"],
+        "format": [
+            {
+                "mode": "ILT",
+                "duration": "18 hours"
+            }
+        ],
+        "roles": {
+            "customer": ["Splunk Cloud Administrators"]
+        },
+        "ga": "2026-01-01",
+        "updated": "2026-02-02",
+        "splunk": {
+            "platform": {
+                "deployment": "Cloud",
+                "version": "9.4"
+            }
+        }
+    },
+    "input": {
+        "labGuides": "./lab-guides"
+    }
+}

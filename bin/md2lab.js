@@ -11,13 +11,14 @@ program
     .version('1.0.0')
     .argument(
         '[sourcePath]',
-        'Path to the directory containing lab guide Markdown files (defaults to current directory)',
+        'Path to the course directory (defaults to current directory). The tool will look for lab guides in <course-dir>/lab-guides.',
     )
     .option('-H, --html', 'Output HTML to console instead of generating a PDF')
     .option(
         '-d, --date <date>',
         'Use a custom date in YYYY-MM-DD format instead of the current date',
     )
+    .option('-o, --output <dir>', 'Custom output directory (default: <course-dir>/dist)')
     .option('-t, --theme <name>', 'Override the theme (e.g., splunk-edu, cisco)')
     .option(
         '-m, --migrate <format>',

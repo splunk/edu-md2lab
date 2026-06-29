@@ -18,14 +18,13 @@ export function isLegacySchema(raw) {
 
 /**
  * Maps a legacy flat metadata object to the new nested manifest schema.
- * The new schema mirrors the md2cd manifest structure.
  *
  * Legacy fields:
- *   course_id, course_title, version, format, duration, audience, ga, updated, output
+ *   course_id, course_title, slug, version, format (string), duration, audience (array), ga, updated
  *
  * New schema:
- *   metadata.courseId, metadata.courseTitle, metadata.version,
- *   metadata.format, metadata.duration, metadata.audience,
+ *   metadata.courseId, metadata.courseTitle, metadata.slug, metadata.version,
+ *   metadata.format (array of {mode, duration}), metadata.roles ({customer, internal}),
  *   metadata.ga, metadata.updated
  *   input.labGuides, output.destination
  */
@@ -33,14 +32,34 @@ export function buildManifestFromLegacy(legacy) {
     const courseId =
         legacy.course_id !== undefined ? String(legacy.course_id).padStart(4, '0') : undefined;
 
+    // Map legacy format string + duration string → new format array of objects
+    let format;
+    if (legacy.format !== undefined || legacy.duration !== undefined) {
+        format = [
+            {
+                ...(legacy.format !== undefined && { mode: legacy.format }),
+                ...(legacy.duration !== undefined && { duration: legacy.duration }),
+            },
+        ];
+    }
+
+    // Map legacy audience array → new roles object
+    let roles;
+    if (legacy.audience !== undefined) {
+        const customer = Array.isArray(legacy.audience)
+            ? legacy.audience
+            : [legacy.audience].filter(Boolean);
+        roles = { customer, internal: [] };
+    }
+
     const manifest = {
         metadata: {
             ...(courseId !== undefined && { courseId }),
             ...(legacy.course_title !== undefined && { courseTitle: legacy.course_title }),
+            ...(legacy.slug !== undefined && { slug: legacy.slug }),
             ...(legacy.version !== undefined && { version: String(legacy.version) }),
-            ...(legacy.format !== undefined && { format: legacy.format }),
-            ...(legacy.duration !== undefined && { duration: legacy.duration }),
-            ...(legacy.audience !== undefined && { audience: legacy.audience }),
+            ...(format !== undefined && { format }),
+            ...(roles !== undefined && { roles }),
             ...(legacy.ga !== undefined && { ga: legacy.ga }),
             ...(legacy.updated !== undefined && { updated: legacy.updated }),
         },

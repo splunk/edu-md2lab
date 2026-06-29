@@ -1,0 +1,12 @@
+<dashboard version="1.1" script="schema_migration:pages/custom_admos.js">
+  <label>Untitled</label>
+  
+  <row>
+    <panel>
+      <html>
+        <!-- Container for React app -->
+        <div id="react-content" style="padding: 20px;"></div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

@@ -31,6 +31,8 @@ export function getVersion(metadata) {
 }
 
 export function getCourseFormat(metadata) {
+    // New schema: format is an array of { mode, duration } objects
+    // Legacy schema: format is a plain string
     const courseFormat = metadata?.format;
     if (courseFormat === undefined) {
         throw new Error("No 'format' found in the metadata");
@@ -39,6 +41,11 @@ export function getCourseFormat(metadata) {
 }
 
 export function getCourseDuration(metadata) {
+    // New schema: duration lives inside format[0].duration
+    if (Array.isArray(metadata?.format) && metadata.format[0]?.duration !== undefined) {
+        return metadata.format[0].duration;
+    }
+    // Legacy schema: top-level duration string
     const courseDuration = metadata?.duration;
     if (courseDuration === undefined) {
         throw new Error("No 'duration' found in the metadata");
@@ -47,9 +54,14 @@ export function getCourseDuration(metadata) {
 }
 
 export function getCourseAudience(metadata) {
+    // New schema: roles.customer array
+    if (metadata?.roles?.customer !== undefined) {
+        return metadata.roles.customer;
+    }
+    // Legacy schema: audience array
     const courseAudience = metadata?.audience;
     if (courseAudience === undefined) {
-        throw new Error("No 'audience' found in the metadata");
+        throw new Error("No 'audience' or 'roles' found in the metadata");
     }
     return courseAudience;
 }
