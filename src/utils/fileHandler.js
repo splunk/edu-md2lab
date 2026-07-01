@@ -36,19 +36,17 @@ export async function getOrderedMarkdownFiles(sourceDir) {
     try {
         const allFiles = await fs.readdir(sourceDir);
 
-        const mdFiles = allFiles.filter((f) => f.endsWith('.md'));
+        const mdFiles = allFiles.filter((f) => f.endsWith('.md') || f.endsWith('.mdx'));
 
-        const introFile = mdFiles.find(
-            (f) =>
-                f.toLowerCase() === 'introduction.md' || f.toLowerCase() === '00-introduction.md',
+        const introFile = mdFiles.find((f) =>
+            /^(introduction|00-introduction)\.mdx?$/.test(f.toLowerCase()),
         );
-        const resourceFile = mdFiles.find(
-            (f) =>
-                f.toLowerCase() === 'resources.md' || /^\d{2}-resources\.md$/.test(f.toLowerCase()),
+        const resourceFile = mdFiles.find((f) =>
+            /^(resources|\d{2}-resources)\.mdx?$/.test(f.toLowerCase()),
         );
 
         const labFiles = mdFiles
-            .filter((f) => f !== introFile && f !== resourceFile && /^\d{2}-.+\.md$/.test(f))
+            .filter((f) => f !== introFile && f !== resourceFile && /^\d{2}-.+\.mdx?$/.test(f))
             .sort((a, b) => parseInt(a) - parseInt(b));
 
         const ordered = [];

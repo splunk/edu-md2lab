@@ -1,8 +1,8 @@
 {
-    "courseId": "schema-migration",
-    "courseTitle": "Splunk Cloud Administration",
-    "slug": "schema-migration",
-    "description": "Learn to administer Splunk Cloud environments.",
+    "courseId": "toc-manual",
+    "courseTitle": "Table of Contents Manual",
+    "slug": "toc-manual",
+    "description": "Testing table of content with manual configuration.",
     "courseDeveloper": ["Splunk EDU"],
     "format": [
         {

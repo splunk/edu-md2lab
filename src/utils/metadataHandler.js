@@ -166,9 +166,10 @@ export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml
         });
     }
 
-    // Ensure required nested structure exists
+    // If the file uses the new flat schema (camelCase without metadata: wrapper),
+    // wrap all fields into the standard { metadata: { ... } } structure.
     if (!manifest.metadata) {
-        throw new Error(`Invalid metadata file: missing "metadata" key. File: ${metadataPath}`);
+        manifest = { metadata: manifest };
     }
 
     // Normalize courseId padding

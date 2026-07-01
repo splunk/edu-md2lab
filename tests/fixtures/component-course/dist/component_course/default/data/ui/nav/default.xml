@@ -1,0 +1,7 @@
+<nav>
+  <view name="introduction" default="true"/>
+  <view name="admonitions" />
+  <view name="answers" />
+  <view name="custom_admos" />
+  <view name="resources" />
+</nav>

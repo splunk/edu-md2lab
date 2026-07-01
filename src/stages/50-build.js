@@ -35,10 +35,10 @@ export class BuildStage extends Stage {
 
         logger.info('📄 Generating PDF(s)...');
         try {
-            const courseId = metadata?.courseId || 'unknown';
+            const _courseId = metadata?.courseId || 'unknown';
             const courseTitle = metadata?.courseTitle || 'Unknown';
-            const version = metadata?.version;
-            const slug = slugify(courseTitle);
+            const _version = metadata?.version;
+            const slug = metadata?.slug || slugify(courseTitle);
 
             // Resolve logo from theme config
             const themeConfig = await loadThemeConfig(context.theme);
@@ -62,7 +62,7 @@ export class BuildStage extends Stage {
                     const base = path.basename(customName, ext);
                     outputFilename = `${base}${variant.suffix}${ext}`;
                 } else {
-                    outputFilename = `${courseId}-${slug}${version ? '-' + version : ''}-lab-guide${variant.suffix}.pdf`;
+                    outputFilename = `${slug}-lab-guide${variant.suffix}.pdf`;
                 }
                 const outputPdfPath = path.join(outputDir, outputFilename);
 

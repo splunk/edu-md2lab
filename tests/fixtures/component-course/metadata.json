@@ -1,10 +1,9 @@
 {
-    "projectId": "PROJ-1234",
-    "courseId": "1234",
-    "courseTitle": "Custom Input",
-    "slug": "custom-input",
-    "description": "Custom fun!",
-    "courseDeveloper": ["Buttercup Pwny", "Splunk EDU"],
+    "courseId": "component-course",
+    "courseTitle": "Component Course",
+    "slug": "component_course",
+    "description": "Learn to troubleshoot common Splunk Enterprise issues.",
+    "courseDeveloper": ["Buttercup Pwnly"],
     "format": [
         {
             "mode": "eLearning",
@@ -16,10 +15,10 @@
         "internal": ["professional services", "sales engineer"]
     },
     "ga": "2025-11-01",
-    "updated": "2026-06-08",
+    "updated": "2026-07-01",
     "splunk": {
         "platform": {
-            "deployment": "Cloud",
+            "deployment": "Enterprise | Cloud",
             "version": "10.2.1"
         }
     }

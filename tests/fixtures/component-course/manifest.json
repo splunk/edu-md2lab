@@ -1,0 +1,11 @@
+{
+    "input": {
+        "labGuides": "./lab-guides",
+        "static": "./static",
+        "readme": "./ILT-README.md"
+    },
+
+    "output": {
+        "formats": ["app"]
+    }
+}

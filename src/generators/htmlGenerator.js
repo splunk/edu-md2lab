@@ -6,6 +6,7 @@ import fs from 'fs';
 import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
 import { processToc, headingToAnchor } from '../utils/tocGenerator.js';
 import { loadThemeCss } from '../utils/loadTheme.js';
+import pluginManager from '../../plugins/pluginLoader.js';
 
 export function registerContainers(md, { includeAnswers }) {
     const types = [
@@ -136,6 +137,94 @@ export function markdownHasAnswersBlock(content) {
     return /::: *answers/.test(content);
 }
 
+/**
+ * Strips JSX/React component blocks from MDX content.
+ *
+ * Detects components by their uppercase-first tag name, which is a fundamental
+ * JSX/React convention. This preserves standard HTML and XML tags (which use
+ * lowercase names) while removing React-style components.
+ *
+ * Handles block-level components only (tag must be at the start of a line).
+ * Both self-closing (<Foo ... />) and paired (<Foo>...</Foo>) forms are supported.
+ *
+ * @param {string} content - The MDX file content.
+ * @param {Function|null} transformFn - Optional function called with the raw
+ *   component block string. Return a non-empty string to replace the component
+ *   with static content; return '' or undefined to remove it entirely.
+ * @returns {string} Content with JSX component blocks removed or transformed.
+ */
+export function stripJsxComponents(content, transformFn = null) {
+    const lines = content.split('\n');
+    const result = [];
+    let state = 'normal'; // 'normal' | 'in-open-tag' | 'in-body'
+    let closingTag = null;
+    let rawBlock = [];
+
+    const flushBlock = () => {
+        if (transformFn) {
+            const replacement = transformFn(rawBlock.join('\n'));
+            if (replacement) result.push(replacement);
+        }
+        rawBlock = [];
+    };
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (state === 'normal') {
+            const match = trimmed.match(/^<([A-Z][a-zA-Z0-9]*)/);
+            if (!match) {
+                result.push(line);
+                continue;
+            }
+
+            const name = match[1];
+            rawBlock = [line];
+            const closingTagStr = `</${name}>`;
+
+            if (trimmed.endsWith('/>')) {
+                // Single-line self-closing: <Foo ... />
+                flushBlock();
+                continue;
+            }
+            if (trimmed.includes(closingTagStr)) {
+                // Single-line paired: <Foo>...</Foo>
+                flushBlock();
+                continue;
+            }
+            if (trimmed.endsWith('>')) {
+                // Opening tag closes with > on this line — body starts next
+                state = 'in-body';
+                closingTag = closingTagStr;
+                continue;
+            }
+            // Multi-line opening tag (attributes span subsequent lines)
+            state = 'in-open-tag';
+            closingTag = closingTagStr;
+        } else if (state === 'in-open-tag') {
+            rawBlock.push(line);
+            if (trimmed.endsWith('/>')) {
+                // Self-closing tag ends here
+                state = 'normal';
+                closingTag = null;
+                flushBlock();
+            } else if (trimmed.endsWith('>')) {
+                // Opening tag ends with >, body follows
+                state = 'in-body';
+            }
+        } else if (state === 'in-body') {
+            rawBlock.push(line);
+            if (trimmed.includes(closingTag)) {
+                state = 'normal';
+                closingTag = null;
+                flushBlock();
+            }
+        }
+    }
+
+    return result.join('\n');
+}
+
 // export function insertDatestamp(fileContent, datestamp) {
 //   fileContent = fileContent.replace(
 //     /^(# .*)$/m,
@@ -193,8 +282,15 @@ export async function generateHtmlContent(
 
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileName = path.basename(file, '.md');
+        const fileName = path.basename(file).replace(/\.mdx?$/, '');
         let fileContent = fs.readFileSync(file, 'utf-8');
+
+        // Strip JSX components from MDX files before further processing
+        if (file.endsWith('.mdx')) {
+            fileContent = stripJsxComponents(fileContent, (rawBlock) =>
+                pluginManager.transformComponent(rawBlock),
+            );
+        }
 
         // Process TOC in the first file
         if (i === 0) {

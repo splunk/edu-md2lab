@@ -1,0 +1,13 @@
+<dashboard version="1.1" script="component_course:pages/answers.js">
+  <label>Answers</label>
+  <description>Answers</description>
+  
+  <row>
+    <panel>
+      <html>
+        <!-- Container for React app -->
+        <div id="react-content" style="padding: 20px;"></div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

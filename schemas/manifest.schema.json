@@ -24,18 +24,50 @@
                     "description": "Course version (e.g., '1.0.0', '9.4')"
                 },
                 "format": {
-                    "type": "string",
-                    "description": "Course delivery format (e.g., 'Instructor-led training with labs')"
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "mode": {
+                                "type": "string",
+                                "description": "Delivery mode (e.g., 'ILT', 'eLearning', 'Instructor-led training')"
+                            },
+                            "duration": {
+                                "type": "string",
+                                "description": "Course duration (e.g., '9 hours', '2 days')"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "description": "Course delivery format(s); each entry has a mode and optional duration"
                 },
-                "duration": {
-                    "type": "string",
-                    "description": "Course duration (e.g., '9 hrs.', '2 days')"
+                "roles": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "External customer roles (e.g., 'Splunk Administrator')"
+                        },
+                        "internal": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Internal Splunk roles (e.g., 'professional services')"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Target audience roles"
                 },
                 "audience": {
                     "type": "array",
                     "items": { "type": "string" },
                     "minItems": 1,
-                    "description": "Target audience roles"
+                    "description": "Legacy: use 'roles' instead"
+                },
+                "duration": {
+                    "type": "string",
+                    "description": "Legacy: use 'format[].duration' instead"
                 },
                 "ga": {
                     "type": "string",

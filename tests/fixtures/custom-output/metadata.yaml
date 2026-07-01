@@ -1,12 +1,18 @@
-metadata:
-    courseId: custom-output
-    courseTitle: Testing custom output
-    version: 1.0.0
-    format: Instructor-led training with labs
-    duration: 9 hrs.
-    audience:
+courseId: custom-output
+courseTitle: Testing custom output
+slug: custom-output
+description: Testing custom output directory configuration.
+courseDeveloper:
+    - Splunk EDU
+format:
+    - mode: Instructor-led training with labs
+      duration: 9 hrs.
+roles:
+    customer:
         - Splunk administrators
-        - Splunk administrators
-        - Splunk administrators
-    ga: '2025-08-11'
-    updated: '2026-06-05'
+ga: '2025-08-11'
+updated: '2026-06-05'
+splunk:
+    platform:
+        deployment: Enterprise
+        version: '1.0.0'

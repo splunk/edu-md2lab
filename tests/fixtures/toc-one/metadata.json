@@ -1,8 +1,8 @@
 {
-    "courseId": "schema-migration",
-    "courseTitle": "Splunk Cloud Administration",
-    "slug": "schema-migration",
-    "description": "Learn to administer Splunk Cloud environments.",
+    "courseId": "toc-one",
+    "courseTitle": "Table of Contents One",
+    "slug": "toc-one",
+    "description": "Testing table of content with one file.",
     "courseDeveloper": ["Splunk EDU"],
     "format": [
         {
