@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,7 +21,7 @@ export async function loadThemeConfig(themeName) {
     if (!fs.existsSync(configPath)) {
         return null;
     }
-    const module = await import(configPath);
+    const module = await import(pathToFileURL(configPath).href);
     return module.default;
 }
 
