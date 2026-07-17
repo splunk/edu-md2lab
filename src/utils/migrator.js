@@ -32,6 +32,17 @@ export function buildManifestFromLegacy(legacy) {
     const courseId =
         legacy.course_id !== undefined ? String(legacy.course_id).padStart(4, '0') : undefined;
 
+    // Derive slug from courseId when not explicitly present in legacy data
+    const slug = legacy.slug || courseId;
+
+    // Map course_developer (string or array) → courseDeveloper (array)
+    let courseDeveloper;
+    if (legacy.course_developer !== undefined) {
+        courseDeveloper = Array.isArray(legacy.course_developer)
+            ? legacy.course_developer
+            : [legacy.course_developer].filter(Boolean);
+    }
+
     // Map legacy format string + duration string → new format array of objects
     let format;
     if (legacy.format !== undefined || legacy.duration !== undefined) {
@@ -52,16 +63,23 @@ export function buildManifestFromLegacy(legacy) {
         roles = { customer, internal: [] };
     }
 
+    // Map legacy top-level version → splunk.platform.version
+    let splunk;
+    if (legacy.version !== undefined) {
+        splunk = { platform: { version: String(legacy.version) } };
+    }
+
     const manifest = {
         metadata: {
             ...(courseId !== undefined && { courseId }),
             ...(legacy.course_title !== undefined && { courseTitle: legacy.course_title }),
-            ...(legacy.slug !== undefined && { slug: legacy.slug }),
-            ...(legacy.version !== undefined && { version: String(legacy.version) }),
+            ...(slug !== undefined && { slug }),
+            ...(courseDeveloper !== undefined && { courseDeveloper }),
             ...(format !== undefined && { format }),
             ...(roles !== undefined && { roles }),
             ...(legacy.ga !== undefined && { ga: legacy.ga }),
             ...(legacy.updated !== undefined && { updated: legacy.updated }),
+            ...(splunk !== undefined && { splunk }),
         },
         input: {
             labGuides: './lab-guides',

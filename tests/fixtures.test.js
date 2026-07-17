@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import path from 'path';
 import fs from 'fs';
+import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
 import {
     headingToAnchor,
@@ -11,6 +12,18 @@ import {
 } from '../src/utils/tocGenerator.js';
 import { stripJsxComponents, generateHtmlContent } from '../src/generators/htmlGenerator.js';
 import { getOrderedMarkdownFiles } from '../src/utils/fileHandler.js';
+import {
+    loadMetadataAndManifest,
+    getCourseTitle,
+    getCourseId,
+    getCourseFormat,
+    getCourseDuration,
+    getCourseAudience,
+    getCourseGA,
+    getVersion,
+} from '../src/utils/metadataHandler.js';
+import { isLegacySchema, buildManifestFromLegacy } from '../src/utils/migrator.js';
+import { generateSlug } from '../src/utils/slugger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -321,5 +334,502 @@ describe('generateHtmlContent with component-course fixture', () => {
         });
 
         expect(html).toContain('data-file="00-introduction"');
+    });
+});
+
+describe('component-course metadata parsing (new schema)', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/component-course');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('wraps fields under manifest.metadata', () => {
+        expect(manifest.metadata).toBeDefined();
+    });
+
+    it('parses courseId correctly', () => {
+        expect(getCourseId(manifest.metadata)).toBe('component-course');
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('Component Course');
+    });
+
+    it('parses format as an array', () => {
+        const format = getCourseFormat(manifest.metadata);
+        expect(Array.isArray(format)).toBe(true);
+        expect(format[0].mode).toBe('eLearning');
+    });
+
+    it('parses duration from format[0].duration', () => {
+        expect(getCourseDuration(manifest.metadata)).toBe('5 hours');
+    });
+
+    it('parses audience from roles.customer', () => {
+        const audience = getCourseAudience(manifest.metadata);
+        expect(audience).toContain('sysadmin');
+        expect(audience).toContain('power user');
+    });
+
+    it('parses ga date correctly', () => {
+        const [ga, err] = getCourseGA(manifest.metadata);
+        expect(err).toBeNull();
+        expect(ga).toBe('2025-11-01');
+    });
+
+    it('returns undefined for version when not set', () => {
+        expect(getVersion(manifest.metadata)).toBeUndefined();
+    });
+
+    it('merges input/output config from manifest.json', () => {
+        expect(manifest.input?.labGuides).toBe('./lab-guides');
+        expect(manifest.output?.formats).toContain('app');
+    });
+});
+
+describe('custom-input metadata and manifest parsing', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-input');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('parses courseId correctly', () => {
+        expect(getCourseId(manifest.metadata)).toBe('custom-input');
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('Custom Input');
+    });
+
+    it('parses projectId from metadata', () => {
+        expect(manifest.metadata.projectId).toBe('PROJ-1234');
+    });
+
+    it('parses courseDeveloper as an array with multiple entries', () => {
+        expect(Array.isArray(manifest.metadata.courseDeveloper)).toBe(true);
+        expect(manifest.metadata.courseDeveloper).toContain('Buttercup Pwny');
+        expect(manifest.metadata.courseDeveloper).toContain('Splunk EDU');
+    });
+
+    it('manifest.json overrides input.labGuides to ./custom-dir', () => {
+        expect(manifest.input?.labGuides).toBe('./custom-dir');
+    });
+
+    it('resolves markdown files from the custom-dir', async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-input');
+        const customDir = path.join(fixtureDir, manifest.input.labGuides);
+        const files = await getOrderedMarkdownFiles(customDir);
+        expect(files.length).toBe(2);
+        expect(files[0]).toMatch(/00-introduction\.md$/);
+        expect(files[1]).toMatch(/01-placeholder\.md$/);
+    });
+
+    it('generates HTML content from custom-dir files', async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-input');
+        const customDir = path.join(fixtureDir, manifest.input.labGuides);
+        const files = await getOrderedMarkdownFiles(customDir);
+        const html = await generateHtmlContent(files, customDir, '2024-01-01', {
+            includeAnswers: false,
+            suffix: '',
+            label: 'without answers',
+        });
+        expect(html).toContain('Testing custom input');
+    });
+});
+
+describe('custom-output metadata and manifest parsing', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-output');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('parses courseId correctly', () => {
+        expect(getCourseId(manifest.metadata)).toBe('custom-output');
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('Testing custom output');
+    });
+
+    it('parses ILT format mode', () => {
+        const format = getCourseFormat(manifest.metadata);
+        expect(Array.isArray(format)).toBe(true);
+        expect(format[0].mode).toBe('Instructor-led training with labs');
+    });
+
+    it('parses duration from format[0].duration', () => {
+        expect(getCourseDuration(manifest.metadata)).toBe('9 hrs.');
+    });
+
+    it('parses audience from roles.customer', () => {
+        const audience = getCourseAudience(manifest.metadata);
+        expect(audience).toEqual(['Splunk administrators']);
+    });
+
+    it('has no internal roles', () => {
+        expect(manifest.metadata.roles.internal).toBeUndefined();
+    });
+
+    it('parses ga date correctly', () => {
+        const [ga, err] = getCourseGA(manifest.metadata);
+        expect(err).toBeNull();
+        expect(ga).toBe('2025-08-11');
+    });
+
+    it('returns undefined for version when not set', () => {
+        expect(getVersion(manifest.metadata)).toBeUndefined();
+    });
+
+    it('manifest.json overrides output.destination to ./custom', () => {
+        expect(manifest.output?.destination).toBe('./custom');
+    });
+
+    it('manifest.json sets custom PDF filename via output.pdfs.labGuide', () => {
+        expect(manifest.output?.pdfs?.labGuide).toBe('custom-filename.pdf');
+    });
+
+    it('has no custom input override (uses default lab-guides)', () => {
+        expect(manifest.input).toBeUndefined();
+    });
+
+    it('resolves markdown files from the default lab-guides dir', async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-output');
+        const labGuidesDir = path.join(fixtureDir, 'lab-guides');
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        expect(files.length).toBe(1);
+        expect(files[0]).toMatch(/00-introduction\.md$/);
+    });
+
+    it('generates HTML content from lab-guides files', async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/custom-output');
+        const labGuidesDir = path.join(fixtureDir, 'lab-guides');
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        const html = await generateHtmlContent(files, labGuidesDir, '2024-01-01', {
+            includeAnswers: false,
+            suffix: '',
+            label: 'without answers',
+        });
+        expect(html).toContain('Testing table of content with one file');
+    });
+});
+
+describe('format-precedence: JSON takes priority over YAML', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/format-precedence');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('loads metadata.json when both metadata.json and metadata.yaml are present', () => {
+        expect(manifest._metadataPath).toMatch(/metadata\.json$/);
+    });
+
+    it('does not load the yaml file', () => {
+        expect(manifest._metadataPath).not.toMatch(/metadata\.ya?ml$/);
+    });
+
+    it('parses the JSON content correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('Testing custom output');
+    });
+});
+
+describe.each([
+    { fixture: 'toc-auto', courseId: 'toc-auto', courseTitle: 'Table of Contents Auto' },
+    { fixture: 'toc-manual', courseId: 'toc-manual', courseTitle: 'Table of Contents Manual' },
+    { fixture: 'toc-one', courseId: 'toc-one', courseTitle: 'Table of Contents One' },
+])('$fixture metadata (no manifest — default settings)', ({ fixture, courseId, courseTitle }) => {
+    let manifest;
+
+    beforeAll(async () => {
+        manifest = await loadMetadataAndManifest(path.join(__dirname, 'fixtures', fixture));
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('parses courseId correctly', () => {
+        expect(getCourseId(manifest.metadata)).toBe(courseId);
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe(courseTitle);
+    });
+
+    it('has no manifest overrides (input and output are undefined)', () => {
+        expect(manifest.input).toBeUndefined();
+        expect(manifest.output).toBeUndefined();
+    });
+});
+
+describe('toc-one single-file lab guide', () => {
+    it('resolves exactly one markdown file', async () => {
+        const labGuidesDir = path.join(__dirname, 'fixtures/toc-one/lab-guides');
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        expect(files.length).toBe(1);
+        expect(files[0]).toMatch(/00-introduction\.md$/);
+    });
+
+    it('generates HTML from a single file', async () => {
+        const labGuidesDir = path.join(__dirname, 'fixtures/toc-one/lab-guides');
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        const html = await generateHtmlContent(files, labGuidesDir, '2024-01-01', {
+            includeAnswers: false,
+            suffix: '',
+            label: 'without answers',
+        });
+        expect(html).toContain('Testing table of content with one file');
+    });
+});
+
+describe('multiple-manifests metadata and manifest parsing', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/multiple-manifests');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('pads numeric courseId to 4 characters', () => {
+        expect(getCourseId(manifest.metadata)).toBe('1234');
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('Custom Output');
+    });
+
+    it('parses projectId from metadata', () => {
+        expect(manifest.metadata.projectId).toBe('PROJ-1234');
+    });
+
+    it('input.labGuides is an array', () => {
+        expect(Array.isArray(manifest.input?.labGuides)).toBe(true);
+    });
+
+    it('input.labGuides references both subdirectories', () => {
+        expect(manifest.input.labGuides).toContain('./dir01/');
+        expect(manifest.input.labGuides).toContain('./dir02/manifest.json');
+    });
+
+    it('input.courseDescription points to the custom description file', () => {
+        expect(manifest.input?.courseDescription).toBe('./custom-filename.md');
+    });
+
+    it('dir02 has its own manifest with output.destination', () => {
+        const dir02Manifest = JSON.parse(
+            fs.readFileSync(
+                path.join(__dirname, 'fixtures/multiple-manifests/dir02/manifest.json'),
+                'utf-8',
+            ),
+        );
+        expect(dir02Manifest.output?.destination).toBe('./custom');
+    });
+
+    it('dir02 manifest specifies a custom PDF filename', () => {
+        const dir02Manifest = JSON.parse(
+            fs.readFileSync(
+                path.join(__dirname, 'fixtures/multiple-manifests/dir02/manifest.json'),
+                'utf-8',
+            ),
+        );
+        expect(dir02Manifest.output?.pdfs?.labGuide).toBe('custom-filename.pdf');
+    });
+});
+
+describe('yaml-all-the-things: YAML metadata and manifest parsing', () => {
+    let manifest;
+
+    beforeAll(async () => {
+        const fixtureDir = path.join(__dirname, 'fixtures/yaml-all-the-things');
+        manifest = await loadMetadataAndManifest(fixtureDir);
+    });
+
+    it('loads metadata.yaml (not a .json file)', () => {
+        expect(manifest._metadataPath).toMatch(/metadata\.yaml$/);
+    });
+
+    it('detects new schema (not legacy)', () => {
+        expect(manifest._legacy).toBe(false);
+    });
+
+    it('parses courseId correctly', () => {
+        expect(getCourseId(manifest.metadata)).toBe('yaml-all-the-things');
+    });
+
+    it('parses courseTitle correctly', () => {
+        expect(getCourseTitle(manifest.metadata)).toBe('YAML All The Things');
+    });
+
+    it('parses projectId', () => {
+        expect(manifest.metadata.projectId).toBe('PROJ-9999');
+    });
+
+    it('parses version string', () => {
+        expect(getVersion(manifest.metadata)).toBe('2.1.0');
+    });
+
+    it('parses courseDeveloper as a multi-entry array', () => {
+        expect(manifest.metadata.courseDeveloper).toContain('Buttercup Pwny');
+        expect(manifest.metadata.courseDeveloper).toContain('Splunk EDU');
+    });
+
+    it('parses format array with mode and duration', () => {
+        const format = getCourseFormat(manifest.metadata);
+        expect(Array.isArray(format)).toBe(true);
+        expect(format[0].mode).toBe('Instructor-led training with labs');
+        expect(getCourseDuration(manifest.metadata)).toBe('9 hrs.');
+    });
+
+    it('parses roles.customer array', () => {
+        const audience = getCourseAudience(manifest.metadata);
+        expect(audience).toContain('sysadmin');
+        expect(audience).toContain('power user');
+    });
+
+    it('parses roles.internal array', () => {
+        expect(manifest.metadata.roles.internal).toContain('professional services');
+        expect(manifest.metadata.roles.internal).toContain('sales engineer');
+    });
+
+    it('parses quoted ga date string', () => {
+        const [ga, err] = getCourseGA(manifest.metadata);
+        expect(err).toBeNull();
+        expect(ga).toBe('2025-08-11');
+    });
+
+    it('parses nested splunk.platform fields', () => {
+        expect(manifest.metadata.splunk?.platform?.deployment).toBe('Enterprise | Cloud');
+        expect(manifest.metadata.splunk?.platform?.version).toBe('10.2.1');
+    });
+
+    it('merges output.destination from manifest.yaml', () => {
+        expect(manifest.output?.destination).toBe('./custom');
+    });
+
+    it('merges output.pdfs.labGuide from manifest.yaml', () => {
+        expect(manifest.output?.pdfs?.labGuide).toBe('yaml-output.pdf');
+    });
+
+    it('merges input.labGuides from manifest.yaml', () => {
+        expect(manifest.input?.labGuides).toBe('./lab-guides');
+    });
+});
+
+describe('metadata-migration: legacy YAML schema detection and migration', () => {
+    let legacyRaw;
+    let migrated;
+    let expectedMetadata;
+
+    beforeAll(() => {
+        const fixturePath = path.join(__dirname, 'fixtures/metadata-migration');
+        legacyRaw = yaml.load(fs.readFileSync(path.join(fixturePath, 'metadata.yaml'), 'utf-8'));
+        migrated = buildManifestFromLegacy(legacyRaw);
+        expectedMetadata = JSON.parse(
+            fs.readFileSync(path.join(fixturePath, 'metadata.json'), 'utf-8'),
+        );
+    });
+
+    it('detects legacy schema via snake_case keys', () => {
+        expect(isLegacySchema(legacyRaw)).toBe(true);
+    });
+
+    it('does not detect new-schema metadata as legacy', () => {
+        expect(isLegacySchema(expectedMetadata)).toBe(false);
+    });
+
+    it('migrates courseId from course_id', () => {
+        expect(migrated.metadata.courseId).toBe('metadata-migration');
+    });
+
+    it('migrates courseTitle from course_title', () => {
+        expect(migrated.metadata.courseTitle).toBe('Migrating Legacy Metadata Schemas');
+    });
+
+    it('derives slug from courseId when not present in legacy data', () => {
+        expect(migrated.metadata.slug).toBe('metadata-migration');
+    });
+
+    it('migrates course_developer string to courseDeveloper array', () => {
+        expect(Array.isArray(migrated.metadata.courseDeveloper)).toBe(true);
+        expect(migrated.metadata.courseDeveloper).toContain('Splunk EDU');
+    });
+
+    it('migrates format string and duration to format array', () => {
+        expect(Array.isArray(migrated.metadata.format)).toBe(true);
+        expect(migrated.metadata.format[0].mode).toBe('Instructor-led training with labs');
+        expect(migrated.metadata.format[0].duration).toBe('9 hrs.');
+    });
+
+    it('migrates audience to roles.customer array', () => {
+        expect(migrated.metadata.roles.customer).toContain('Splunk administrators');
+    });
+
+    it('initialises roles.internal as empty array', () => {
+        expect(migrated.metadata.roles.internal).toEqual([]);
+    });
+
+    it('nests version under splunk.platform.version', () => {
+        expect(migrated.metadata.splunk?.platform?.version).toBe('10.2');
+    });
+
+    it('does not include deployment (cannot be auto-migrated)', () => {
+        expect(migrated.metadata.splunk?.platform?.deployment).toBeUndefined();
+    });
+
+    it('migrated metadata matches the expected metadata.json fixture', () => {
+        expect(migrated.metadata).toEqual(expectedMetadata);
+    });
+
+    it('sets default input.labGuides in migrated manifest', () => {
+        expect(migrated.input?.labGuides).toBe('./lab-guides');
+    });
+});
+
+describe('slugger: generateSlug', () => {
+    it('lowercases and hyphenates words', () => {
+        expect(generateSlug('Cloud Administration')).toBe('cloud-admin');
+    });
+
+    it('removes Splunk from the title', () => {
+        expect(generateSlug('Splunk Cloud Administration')).toBe('cloud-admin');
+    });
+
+    it('removes Enterprise from the title', () => {
+        expect(generateSlug('Enterprise Data Management')).toBe('data-management');
+    });
+
+    it('shortens Administrator to admin', () => {
+        expect(generateSlug('Splunk Administrator Basics')).toBe('admin-basics');
+    });
+
+    it('collapses multiple hyphens', () => {
+        expect(generateSlug('Splunk Enterprise Administration')).toBe('admin');
+    });
+
+    it('strips leading and trailing hyphens', () => {
+        expect(generateSlug('Splunk Basics')).toBe('basics');
     });
 });

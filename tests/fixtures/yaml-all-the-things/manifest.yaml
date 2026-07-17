@@ -1,0 +1,6 @@
+input:
+    labGuides: ./lab-guides
+output:
+    destination: ./custom
+    pdfs:
+        labGuide: yaml-output.pdf

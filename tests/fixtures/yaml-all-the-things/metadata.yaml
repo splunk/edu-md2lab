@@ -1,0 +1,25 @@
+projectId: PROJ-9999
+courseId: yaml-all-the-things
+courseTitle: YAML All The Things
+slug: yaml-all-the-things
+description: Comprehensive YAML parsing fixture.
+version: '2.1.0'
+courseDeveloper:
+    - Buttercup Pwny
+    - Splunk EDU
+format:
+    - mode: Instructor-led training with labs
+      duration: 9 hrs.
+roles:
+    customer:
+        - sysadmin
+        - power user
+    internal:
+        - professional services
+        - sales engineer
+ga: '2025-08-11'
+updated: '2026-06-05'
+splunk:
+    platform:
+        deployment: Enterprise | Cloud
+        version: '10.2.1'

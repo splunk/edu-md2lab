@@ -1,6 +1,6 @@
 {
     "projectId": "PROJ-1234",
-    "courseId": "1234",
+    "courseId": "custom-input",
     "courseTitle": "Custom Input",
     "slug": "custom-input",
     "description": "Custom fun!",
