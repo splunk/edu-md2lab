@@ -380,7 +380,8 @@ export async function generatePdf(sourceDir, metadata, datestamp, options = {}) 
             );
             fs.writeFileSync(outputPdfPath, finalBuffer);
         } else {
-            fs.writeFileSync(outputPdfPath, pdfBuffer);
+            const finalBuffer = await pdfDoc.save();
+            fs.writeFileSync(outputPdfPath, finalBuffer);
         }
 
         logger.info(`⚙️  Generating PDF ${variant.label} ${outputPdfPath}`);

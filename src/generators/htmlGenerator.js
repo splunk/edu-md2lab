@@ -305,7 +305,7 @@ export async function generateHtmlContent(
             fileContent = stripAnswersBlocks(fileContent);
         }
 
-        const htmlContent = md.render(embedLocalImagesInMarkdown(fileContent, sourceDir));
+        const htmlContent = md.render(embedLocalImagesInMarkdown(fileContent, path.dirname(file)));
 
         markdownContent += `<section class="section" data-file="${fileName}">\n${htmlContent}\n</section>`;
 

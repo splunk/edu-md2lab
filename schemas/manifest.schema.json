@@ -86,8 +86,18 @@
             "type": "object",
             "properties": {
                 "labGuides": {
-                    "type": "string",
-                    "description": "Path to lab guides directory (default: ./lab-guides)"
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "Path to a single lab guides directory (default: ./lab-guides)"
+                        },
+                        {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "minItems": 1,
+                            "description": "Paths to multiple lab guide directories or sub-manifest files, merged in order"
+                        }
+                    ]
                 }
             },
             "additionalProperties": true
