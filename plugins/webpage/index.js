@@ -89,6 +89,10 @@ const SIDEBAR_CSS = `
       }
     }
 
+    pre {
+      position: relative;
+    }
+
     pre.hljs {
       position: relative;
     }
@@ -109,7 +113,8 @@ const SIDEBAR_CSS = `
       transition: opacity 0.15s;
     }
 
-    pre.hljs:hover .copy-btn {
+    pre.hljs:hover .copy-btn,
+    pre:hover .copy-btn {
       opacity: 1;
     }
 
@@ -171,7 +176,7 @@ const SCRIPTS = `  <script>
       headings.forEach(function (heading) { observer.observe(heading); });
     })();
 
-    document.querySelectorAll('pre.hljs').forEach(function (pre) {
+    document.querySelectorAll('pre').forEach(function (pre) {
       var btn = document.createElement('button');
       btn.className = 'copy-btn';
       btn.textContent = 'Copy';
