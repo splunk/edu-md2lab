@@ -111,7 +111,31 @@
                 },
                 "theme": {
                     "type": "string",
-                    "description": "Theme name (default: splunk-edu)"
+                    "description": "Deprecated: use output.render.theme instead"
+                },
+                "render": {
+                    "type": "object",
+                    "properties": {
+                        "theme": {
+                            "type": "string",
+                            "description": "Lab guide theme name (default: splunk-edu)"
+                        },
+                        "code": {
+                            "type": "object",
+                            "properties": {
+                                "theme": {
+                                    "type": "string",
+                                    "description": "highlight.js theme name (default: atom-one-dark)"
+                                },
+                                "lineNumbers": {
+                                    "type": "boolean",
+                                    "description": "Show line numbers in code blocks (default: false)"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "additionalProperties": true

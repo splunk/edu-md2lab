@@ -16,17 +16,23 @@ export class LoadStage extends Stage {
             context.manifest = manifest;
             context.metadata = manifest.metadata;
 
-            // Resolve theme
+            // Resolve theme — output.render.theme takes precedence over legacy output.theme
             if (context.options.theme) {
                 context.theme = context.options.theme;
                 logger.info(`  Theme: ${context.theme} (CLI override)`);
+            } else if (manifest.output?.render?.theme) {
+                context.theme = manifest.output.render.theme;
+                logger.info(`  Theme: ${context.theme}`);
             } else if (manifest.output?.theme) {
                 context.theme = manifest.output.theme;
-                logger.info(`  Theme: ${context.theme}`);
+                logger.info(`  Theme: ${context.theme} (legacy output.theme)`);
             } else {
                 context.theme = 'splunk-edu';
                 logger.info(`  Theme: ${context.theme} (default)`);
             }
+
+            // Resolve render.code config
+            context.renderCode = manifest.output?.render?.code ?? {};
 
             // Resolve plugins
             if (manifest.plugins && Array.isArray(manifest.plugins)) {

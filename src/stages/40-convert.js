@@ -40,6 +40,7 @@ export class ConvertStage extends Stage {
                     context.formattedDate,
                     variant,
                     context.theme,
+                    context.renderCode,
                 );
                 context.htmlVariants.push({ html, variant });
                 logger.info(

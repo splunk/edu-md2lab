@@ -121,7 +121,7 @@ export async function loadMetadata(metadataPath) {
 
 /**
  * Loads metadata from metadata.json / metadata.yaml / metadata.yml in sourceDir.
- * Detects legacy flat schema and migrates in-memory; writes a *.new.yaml for review.
+ * Detects legacy flat schema and migrates in-memory; renames the original to *.yaml.legacy and writes the migrated file in its place.
  * Returns a normalized manifest object: { metadata, input, output, plugins?, _metadataPath, _legacy }
  */
 export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml' } = {}) {

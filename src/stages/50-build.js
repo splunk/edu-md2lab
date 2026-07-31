@@ -12,6 +12,7 @@ import { slugify, updateMetadataDate } from '../utils/metadataHandler.js';
 import { loadThemeConfig, getThemeAssetPath } from '../utils/loadTheme.js';
 import { PDFDocument } from 'pdf-lib';
 import logger from '../utils/logger.js';
+import pluginManager from '../../plugins/pluginLoader.js';
 
 export class BuildStage extends Stage {
     constructor() {
@@ -29,6 +30,33 @@ export class BuildStage extends Stage {
                     space_in_empty_paren: true,
                 });
                 console.log(prettyHtml);
+            }
+            return;
+        }
+
+        // If a plugin requests HTML output, write index.html instead of PDF
+        if (pluginManager.getOutputMode() === 'html') {
+            logger.info('🌐 Writing HTML output (webpage plugin)...');
+            try {
+                const outputDir = context.options.output
+                    ? path.resolve(context.options.output)
+                    : context.manifest?.output?.destination
+                      ? path.join(context.sourceDir, context.manifest.output.destination)
+                      : path.join(context.sourceDir, 'dist');
+
+                fs.mkdirSync(outputDir, { recursive: true });
+
+                for (const { html, variant } of context.htmlVariants) {
+                    const processed = pluginManager.postProcessHtml(html);
+                    const filename = variant.suffix ? `index${variant.suffix}.html` : 'index.html';
+                    const outputPath = path.join(outputDir, filename);
+                    fs.writeFileSync(outputPath, processed, 'utf-8');
+                    context.outputPaths.push(outputPath);
+                    logger.info(`  Written: ${outputPath}`);
+                }
+            } catch (error) {
+                context.addError(error.message, this.name);
+                throw error;
             }
             return;
         }

@@ -8,6 +8,8 @@ class PluginManager {
             fontFamilies: [], // additional font-family strings for CSS
             labels: {}, // label overrides e.g. { note: 'Note personnalisée' }
             componentTransforms: [], // fns called with raw JSX block; return string to replace, '' to remove
+            outputMode: null, // 'html' to skip PDF and write index.html instead
+            postProcessHtmlFns: [], // fns(html) -> html, applied in order after HTML generation
         };
     }
 
@@ -31,6 +33,12 @@ class PluginManager {
             }
             if (Array.isArray(plugin.hooks.componentTransforms)) {
                 this.hooks.componentTransforms.push(...plugin.hooks.componentTransforms);
+            }
+            if (plugin.hooks.outputMode) {
+                this.hooks.outputMode = plugin.hooks.outputMode;
+            }
+            if (typeof plugin.hooks.postProcessHtml === 'function') {
+                this.hooks.postProcessHtmlFns.push(plugin.hooks.postProcessHtml);
             }
         }
 
@@ -68,6 +76,14 @@ class PluginManager {
         return ''; // default: remove the component
     }
 
+    getOutputMode() {
+        return this.hooks.outputMode;
+    }
+
+    postProcessHtml(html) {
+        return this.hooks.postProcessHtmlFns.reduce((h, fn) => fn(h), html);
+    }
+
     reset() {
         this.plugins = [];
         this.hooks = {
@@ -75,6 +91,8 @@ class PluginManager {
             fontFamilies: [],
             labels: {},
             componentTransforms: [],
+            outputMode: null,
+            postProcessHtmlFns: [],
         };
     }
 }

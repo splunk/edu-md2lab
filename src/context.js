@@ -10,6 +10,7 @@ export class Context {
         this.datestamp = options.datestamp || null; // ISO date string e.g. '2026-05-07'
         this.formattedDate = null; // human-readable e.g. 'May 07, 2026'
         this.theme = null; // theme name e.g. 'splunk-edu'
+        this.renderCode = {}; // output.render.code config
         this.plugins = []; // plugin entries from manifest
         this.outputPaths = []; // written PDF paths
         this.errors = [];

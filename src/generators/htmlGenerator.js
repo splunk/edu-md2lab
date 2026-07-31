@@ -1,6 +1,7 @@
 import logger from '../utils/logger.js';
 import container from 'markdown-it-container';
 import markdownIt from 'markdown-it';
+import hljs from 'highlight.js';
 import path from 'path';
 import fs from 'fs';
 import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
@@ -258,8 +259,59 @@ export async function generateHtmlContent(
     formattedDate,
     variant,
     themeName = 'splunk-edu',
+    renderCode = {},
 ) {
-    const md = markdownIt({ html: true });
+    const md = markdownIt({
+        html: true,
+        ...(renderCode.theme && {
+            highlight(code, lang) {
+                const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+                const highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+                return `<pre class="hljs"><code>${highlighted}</code></pre>`;
+            },
+        }),
+    });
+
+    // Custom image renderer — supports scale= and align= in the title attribute
+    // Usage: ![alt](image.png "scale=50% align=center")
+    md.renderer.rules.image = function (tokens, idx) {
+        const token = tokens[idx];
+        const src = token.attrGet('src') ?? '';
+        const alt = token.children ? token.children.reduce((acc, t) => acc + t.content, '') : '';
+        const title = token.attrGet('title') ?? '';
+
+        const scaleMatch = title.match(/\bscale=(\d+%|\d+px)/);
+        const alignMatch = title.match(/\balign=(left|center|right)/);
+
+        const cleanTitle = title
+            .replace(/\bscale=\S+\s*/g, '')
+            .replace(/\balign=\S+\s*/g, '')
+            .trim();
+
+        const styles = [];
+        if (scaleMatch) styles.push(`width: ${scaleMatch[1]}`);
+        if (alignMatch) {
+            const align = alignMatch[1];
+            if (align === 'center') {
+                styles.push('display: block', 'margin-left: auto', 'margin-right: auto');
+            } else if (align === 'left') {
+                styles.push('display: block', 'margin-right: auto');
+            } else if (align === 'right') {
+                styles.push('display: block', 'margin-left: auto');
+            }
+        }
+
+        const attrs = [
+            `src="${src}"`,
+            `alt="${md.utils.escapeHtml(alt)}"`,
+            cleanTitle ? `title="${md.utils.escapeHtml(cleanTitle)}"` : '',
+            styles.length ? `style="${styles.join('; ')}"` : '',
+        ]
+            .filter(Boolean)
+            .join(' ');
+
+        return `<img ${attrs}>`;
+    };
 
     // Add IDs to headings for anchor links
     md.renderer.rules.heading_open = function (tokens, idx) {
@@ -316,6 +368,15 @@ export async function generateHtmlContent(
 
     // Load theme CSS (all fonts embedded as base64 data URIs)
     let cssContent = loadThemeCss(themeName);
+
+    // Inject highlight.js theme (only when explicitly configured)
+    if (renderCode.theme) {
+        const hljsThemePath = new URL(
+            `../../node_modules/highlight.js/styles/${renderCode.theme}.min.css`,
+            import.meta.url,
+        );
+        cssContent += '\n\n' + fs.readFileSync(hljsThemePath, 'utf-8');
+    }
 
     const customCssPath = path.join(sourceDir, 'custom.css');
     if (fs.existsSync(customCssPath)) {

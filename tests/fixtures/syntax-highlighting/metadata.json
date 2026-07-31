@@ -1,0 +1,24 @@
+{
+    "courseId": "syntax-highlighting",
+    "courseTitle": "Testing syntax highlighting in code blocks",
+    "slug": "syntax-highlighting",
+    "description": "Testing syntax highlighting in code blocks.",
+    "courseDeveloper": ["Splunk EDU"],
+    "format": [
+        {
+            "mode": "Instructor-led training with labs",
+            "duration": "9 hrs."
+        }
+    ],
+    "roles": {
+        "customer": ["Splunk administrators"]
+    },
+    "ga": "2025-08-11",
+    "updated": "2026-07-31",
+    "splunk": {
+        "platform": {
+            "deployment": "Enterprise",
+            "version": "1.0.0"
+        }
+    }
+}

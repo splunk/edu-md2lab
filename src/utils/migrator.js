@@ -107,8 +107,8 @@ export function serializeManifestAsJson(manifest) {
 }
 
 /**
- * Writes the migrated manifest to a new file alongside the original.
- * Does NOT overwrite the original; writes to metadata.new.<ext> for review.
+ * Renames the original legacy metadata file to <name>.yaml.legacy, then writes
+ * the migrated manifest as the canonical metadata file (<name>.yaml or <name>.json).
  *
  * @param {string} metadataPath - Original metadata file path
  * @param {Object} manifest - Migrated manifest object
@@ -119,18 +119,21 @@ export async function writeMigratedManifest(metadataPath, manifest, format = 'ya
     const base = path.basename(metadataPath, srcExt);
     const dir = path.dirname(metadataPath);
 
+    // Preserve the original under a .legacy extension
+    const legacyPath = metadataPath + '.legacy';
+    await fs.rename(metadataPath, legacyPath);
+
+    // Write the migrated file with the canonical name
     const outExt = format === 'json' ? '.json' : srcExt || '.yaml';
-    const newPath = path.join(dir, `${base}.new${outExt}`);
+    const newPath = path.join(dir, `${base}${outExt}`);
 
     const content =
         format === 'json' ? serializeManifestAsJson(manifest) : serializeManifestAsYaml(manifest);
 
     await fs.writeFile(newPath, content, 'utf8');
 
-    logger.warn(`  Legacy metadata detected. Review migrated schema at: ${newPath}`);
-    logger.warn(
-        `  Replace your ${path.basename(metadataPath)} with ${path.basename(newPath)} when ready.`,
-    );
+    logger.warn(`  Original preserved as: ${path.basename(legacyPath)}`);
+    logger.warn(`  Migrated schema written to: ${path.basename(newPath)}`);
 
     return newPath;
 }

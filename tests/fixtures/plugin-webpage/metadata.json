@@ -1,0 +1,24 @@
+{
+    "courseId": "plugin-webpage",
+    "courseTitle": "Testing webpage plugin",
+    "slug": "plugin-webpage",
+    "description": "Testing plugin webpage output",
+    "courseDeveloper": ["Splunk EDU"],
+    "format": [
+        {
+            "mode": "Instructor-led training with labs",
+            "duration": "9 hrs."
+        }
+    ],
+    "roles": {
+        "customer": ["Splunk administrators"]
+    },
+    "ga": "2025-08-11",
+    "updated": "2026-06-05",
+    "splunk": {
+        "platform": {
+            "deployment": "Enterprise",
+            "version": "1.0.0"
+        }
+    }
+}

@@ -25,6 +25,7 @@
         "ajv": "^8.20.0",
         "commander": "^13.1.0",
         "fs-extra": "^11.3.0",
+        "highlight.js": "^11.11.1",
         "js-beautify": "^1.15.4",
         "js-yaml": "^4.1.0",
         "markdown-it": "^14.1.0",

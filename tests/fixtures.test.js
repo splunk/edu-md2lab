@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'path';
 import fs from 'fs';
 import yaml from 'js-yaml';
@@ -24,6 +24,8 @@ import {
 } from '../src/utils/metadataHandler.js';
 import { isLegacySchema, buildManifestFromLegacy } from '../src/utils/migrator.js';
 import { generateSlug } from '../src/utils/slugger.js';
+import pluginManager from '../plugins/pluginLoader.js';
+import { postProcessHtml } from '../plugins/webpage/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -745,7 +747,9 @@ describe('metadata-migration: legacy YAML schema detection and migration', () =>
 
     beforeAll(() => {
         const fixturePath = path.join(__dirname, 'fixtures/metadata-migration');
-        legacyRaw = yaml.load(fs.readFileSync(path.join(fixturePath, 'metadata.yaml'), 'utf-8'));
+        legacyRaw = yaml.load(
+            fs.readFileSync(path.join(fixturePath, 'metadata.yaml.legacy'), 'utf-8'),
+        );
         migrated = buildManifestFromLegacy(legacyRaw);
         expectedMetadata = JSON.parse(
             fs.readFileSync(path.join(fixturePath, 'metadata.json'), 'utf-8'),
@@ -831,5 +835,108 @@ describe('slugger: generateSlug', () => {
 
     it('strips leading and trailing hyphens', () => {
         expect(generateSlug('Splunk Basics')).toBe('basics');
+    });
+});
+
+describe('syntax-highlighting fixture', () => {
+    const fixtureDir = path.join(__dirname, 'fixtures/syntax-highlighting');
+    const labGuidesDir = path.join(fixtureDir, 'lab-guides');
+    let manifest;
+    let html;
+
+    beforeAll(async () => {
+        manifest = await loadMetadataAndManifest(fixtureDir);
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        const renderCode = manifest.output?.render?.code ?? {};
+        html = await generateHtmlContent(
+            files,
+            labGuidesDir,
+            '2026-07-31',
+            { includeAnswers: false, suffix: '', label: 'without answers' },
+            manifest.output?.render?.theme ?? 'splunk-edu',
+            renderCode,
+        );
+    });
+
+    it('reads output.render.theme from manifest', () => {
+        expect(manifest.output?.render?.theme).toBe('splunk-edu');
+    });
+
+    it('reads output.render.code.theme from manifest', () => {
+        expect(manifest.output?.render?.code?.theme).toBe('atom-one-dark');
+    });
+
+    it('renders hljs-highlighted pre blocks', () => {
+        expect(html).toContain('class="hljs"');
+    });
+
+    it('applies hljs spans to JavaScript code', () => {
+        expect(html).toContain('<span class="hljs-');
+    });
+
+    it('injects the atom-one-dark highlight.js theme CSS', () => {
+        expect(html).toContain('.hljs{');
+    });
+
+    it('renders the plain (no-language) code block without error', () => {
+        expect(html).toContain('just plain text');
+        expect(html).toContain('no highlighting');
+    });
+});
+
+describe('webpage plugin', () => {
+    const fixtureDir = path.join(__dirname, 'fixtures/plugin-webpage');
+    const labGuidesDir = path.join(fixtureDir, 'lab-guides');
+    let manifest;
+    let rawHtml;
+    let processedHtml;
+
+    beforeAll(async () => {
+        manifest = await loadMetadataAndManifest(fixtureDir);
+        const files = await getOrderedMarkdownFiles(labGuidesDir);
+        rawHtml = await generateHtmlContent(files, labGuidesDir, '2026-07-31', {
+            includeAnswers: false,
+            suffix: '',
+            label: 'without answers',
+        });
+        processedHtml = postProcessHtml(rawHtml);
+    });
+
+    afterAll(() => {
+        pluginManager.reset();
+    });
+
+    it('manifest declares the webpage plugin', () => {
+        expect(manifest.plugins?.[0]?.name).toBe('webpage');
+    });
+
+    it('plugin exports outputMode as html', async () => {
+        const { default: plugin } = await import('../plugins/webpage/index.js');
+        expect(plugin.hooks.outputMode).toBe('html');
+    });
+
+    it('injects the toc-sidebar nav element', () => {
+        expect(processedHtml).toContain('id="toc-sidebar"');
+    });
+
+    it('injects the toc-list ul element', () => {
+        expect(processedHtml).toContain('id="toc-list"');
+    });
+
+    it('injects sidebar CSS', () => {
+        expect(processedHtml).toContain('#toc-sidebar');
+    });
+
+    it('injects copy button script', () => {
+        expect(processedHtml).toContain('copy-btn');
+    });
+
+    it('injects IntersectionObserver script for active TOC links', () => {
+        expect(processedHtml).toContain('IntersectionObserver');
+    });
+
+    it('injects exactly one sidebar into the output', () => {
+        const count = (processedHtml.match(/id="toc-sidebar"/g) || []).length;
+        expect(count).toBe(1);
     });
 });

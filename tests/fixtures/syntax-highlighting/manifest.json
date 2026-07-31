@@ -1,0 +1,10 @@
+{
+    "output": {
+        "render": {
+            "theme": "splunk-edu",
+            "code": {
+                "theme": "atom-one-dark"
+            }
+        }
+    }
+}
