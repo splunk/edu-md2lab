@@ -263,13 +263,17 @@ export async function generateHtmlContent(
 ) {
     const md = markdownIt({
         html: true,
-        ...(renderCode.theme && {
-            highlight(code, lang) {
+        highlight(code, lang) {
+            if (lang === 'output') {
+                return `<pre class="output"><code>${md.utils.escapeHtml(code)}</code></pre>`;
+            }
+            if (renderCode.theme) {
                 const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
                 const highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
                 return `<pre class="hljs"><code>${highlighted}</code></pre>`;
-            },
-        }),
+            }
+            return '';
+        },
     });
 
     // Custom image renderer — supports scale= and align= in the title attribute

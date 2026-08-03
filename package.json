@@ -1,6 +1,6 @@
 {
     "name": "@splunk-edu/md2lab",
-    "version": "1.0.12",
+    "version": "2.0.0",
     "description": "Convert Markdown lab guides to styled PDFs.",
     "type": "module",
     "main": "./src/index.js",

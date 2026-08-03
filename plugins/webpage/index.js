@@ -114,7 +114,7 @@ const SIDEBAR_CSS = `
     }
 
     pre.hljs:hover .copy-btn,
-    pre:hover .copy-btn {
+    pre:not(.output):hover .copy-btn {
       opacity: 1;
     }
 
@@ -123,6 +123,7 @@ const SIDEBAR_CSS = `
       background: #FF0F7B;
       color: #fff;
     }
+
 `;
 
 const SIDEBAR_NAV = `  <nav id="toc-sidebar" aria-label="Table of contents">
@@ -176,7 +177,8 @@ const SCRIPTS = `  <script>
       headings.forEach(function (heading) { observer.observe(heading); });
     })();
 
-    document.querySelectorAll('pre').forEach(function (pre) {
+    // Copy-to-clipboard: applied to code blocks only, not output blocks
+    document.querySelectorAll('pre:not(.output)').forEach(function (pre) {
       var btn = document.createElement('button');
       btn.className = 'copy-btn';
       btn.textContent = 'Copy';
