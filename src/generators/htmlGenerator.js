@@ -4,6 +4,7 @@ import markdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import path from 'path';
 import fs from 'fs';
+import { createRequire } from 'module';
 import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
 import { processToc, headingToAnchor } from '../utils/tocGenerator.js';
 import { loadThemeCss } from '../utils/loadTheme.js';
@@ -375,10 +376,8 @@ export async function generateHtmlContent(
 
     // Inject highlight.js theme (only when explicitly configured)
     if (renderCode.theme) {
-        const hljsThemePath = new URL(
-            `../../node_modules/highlight.js/styles/${renderCode.theme}.min.css`,
-            import.meta.url,
-        );
+        const require = createRequire(import.meta.url);
+        const hljsThemePath = require.resolve(`highlight.js/styles/${renderCode.theme}.min.css`);
         cssContent += '\n\n' + fs.readFileSync(hljsThemePath, 'utf-8');
     }
 
