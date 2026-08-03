@@ -1,6 +1,6 @@
 {
     "name": "@splunk-edu/md2lab",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Convert Markdown lab guides to styled PDFs.",
     "type": "module",
     "main": "./src/index.js",
@@ -32,7 +32,7 @@
         "markdown-it-container": "^4.0.0",
         "pdf-lib": "^1.17.1",
         "puppeteer": "^25.0.0",
-        "sharp": "^0.34.1",
+        "sharp": "^0.35.3",
         "stylelint": "^16.19.1",
         "stylelint-config-standard": "^38.0.0",
         "yaml": "^2.8.0"
