@@ -3,7 +3,8 @@
         "render": {
             "theme": "splunk-edu",
             "code": {
-                "theme": "atom-one-dark"
+                "theme": "atom-one-dark",
+                "spl": false
             }
         }
     }

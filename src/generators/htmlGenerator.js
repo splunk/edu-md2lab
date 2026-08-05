@@ -2,7 +2,10 @@ import logger from '../utils/logger.js';
 import container from 'markdown-it-container';
 import markdownIt from 'markdown-it';
 import hljs from 'highlight.js';
+import splGrammar from '../utils/hljsSpl.js';
 import path from 'path';
+
+hljs.registerLanguage('spl', splGrammar);
 import fs from 'fs';
 import { createRequire } from 'module';
 import { embedLocalImagesInMarkdown } from '../utils/imageHandler.js';
@@ -268,10 +271,20 @@ export async function generateHtmlContent(
             if (lang === 'output') {
                 return `<pre class="output"><code>${md.utils.escapeHtml(code)}</code></pre>`;
             }
+            const splEnabled = renderCode.spl !== false;
             if (renderCode.theme) {
-                const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+                const language =
+                    lang === 'spl' && !splEnabled
+                        ? 'plaintext'
+                        : lang && hljs.getLanguage(lang)
+                          ? lang
+                          : 'plaintext';
                 const highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
-                return `<pre class="hljs"><code>${highlighted}</code></pre>`;
+                const classes = lang ? `hljs ${lang}` : 'hljs';
+                return `<pre class="${classes}"><code>${highlighted}</code></pre>`;
+            }
+            if (lang) {
+                return `<pre class="${lang}"><code>${md.utils.escapeHtml(code)}</code></pre>`;
             }
             return '';
         },

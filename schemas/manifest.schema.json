@@ -130,6 +130,10 @@
                                 "lineNumbers": {
                                     "type": "boolean",
                                     "description": "Show line numbers in code blocks (default: false)"
+                                },
+                                "spl": {
+                                    "type": "boolean",
+                                    "description": "Enable SPL syntax highlighting and .spl CSS class (default: true)"
                                 }
                             },
                             "additionalProperties": false

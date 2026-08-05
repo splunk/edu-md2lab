@@ -249,6 +249,21 @@ code {
     font-size: 14px;
 }
 
+/* SPL code blocks */
+pre.spl {
+    background-color: #1a1a2e;
+    border-left: 4px solid #65a637;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0;
+}
+
+pre.spl code {
+    color: #e8e8e8;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+}
+
 /* TABLES */
 table {
     border-collapse: collapse;
