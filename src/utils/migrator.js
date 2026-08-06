@@ -70,23 +70,15 @@ export function buildManifestFromLegacy(legacy) {
     }
 
     const manifest = {
-        metadata: {
-            ...(courseId !== undefined && { courseId }),
-            ...(legacy.course_title !== undefined && { courseTitle: legacy.course_title }),
-            ...(slug !== undefined && { slug }),
-            ...(courseDeveloper !== undefined && { courseDeveloper }),
-            ...(format !== undefined && { format }),
-            ...(roles !== undefined && { roles }),
-            ...(legacy.ga !== undefined && { ga: legacy.ga }),
-            ...(legacy.updated !== undefined && { updated: legacy.updated }),
-            ...(splunk !== undefined && { splunk }),
-        },
-        input: {
-            labGuides: './lab-guides',
-        },
-        output: {
-            destination: './dist',
-        },
+        ...(courseId !== undefined && { courseId }),
+        ...(legacy.course_title !== undefined && { courseTitle: legacy.course_title }),
+        ...(slug !== undefined && { slug }),
+        ...(courseDeveloper !== undefined && { courseDeveloper }),
+        ...(format !== undefined && { format }),
+        ...(roles !== undefined && { roles }),
+        ...(legacy.ga !== undefined && { ga: legacy.ga }),
+        ...(legacy.updated !== undefined && { updated: legacy.updated }),
+        ...(splunk !== undefined && { splunk }),
     };
 
     return manifest;

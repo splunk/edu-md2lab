@@ -763,54 +763,51 @@ describe('metadata-migration: legacy YAML schema detection and migration', () =>
     });
 
     it('migrates courseId from course_id', () => {
-        expect(migrated.metadata.courseId).toBe('metadata-migration');
+        expect(migrated.courseId).toBe('metadata-migration');
     });
 
     it('migrates courseTitle from course_title', () => {
-        expect(migrated.metadata.courseTitle).toBe('Migrating Legacy Metadata Schemas');
+        expect(migrated.courseTitle).toBe('Migrating Legacy Metadata Schemas');
     });
 
     it('derives slug from courseId when not present in legacy data', () => {
-        expect(migrated.metadata.slug).toBe('metadata-migration');
+        expect(migrated.slug).toBe('metadata-migration');
     });
 
     it('migrates course_developer string to courseDeveloper array', () => {
-        expect(Array.isArray(migrated.metadata.courseDeveloper)).toBe(true);
-        expect(migrated.metadata.courseDeveloper).toContain('Splunk EDU');
+        expect(Array.isArray(migrated.courseDeveloper)).toBe(true);
+        expect(migrated.courseDeveloper).toContain('Splunk EDU');
     });
 
     it('migrates format string and duration to format array', () => {
-        expect(Array.isArray(migrated.metadata.format)).toBe(true);
-        expect(migrated.metadata.format[0].mode).toBe('Instructor-led training with labs');
-        expect(migrated.metadata.format[0].duration).toBe('9 hrs.');
+        expect(Array.isArray(migrated.format)).toBe(true);
+        expect(migrated.format[0].mode).toBe('Instructor-led training with labs');
+        expect(migrated.format[0].duration).toBe('9 hrs.');
     });
 
     it('migrates audience to roles.customer array', () => {
-        expect(migrated.metadata.roles.customer).toContain('Splunk administrators');
+        expect(migrated.roles.customer).toContain('Splunk administrators');
     });
 
     it('initialises roles.internal as empty array', () => {
-        expect(migrated.metadata.roles.internal).toEqual([]);
+        expect(migrated.roles.internal).toEqual([]);
     });
 
     it('nests version under splunk.platform.version', () => {
-        expect(migrated.metadata.splunk?.platform?.version).toBe('10.2');
+        expect(migrated.splunk?.platform?.version).toBe('10.2');
     });
 
     it('does not include deployment (cannot be auto-migrated)', () => {
-        expect(migrated.metadata.splunk?.platform?.deployment).toBeUndefined();
+        expect(migrated.splunk?.platform?.deployment).toBeUndefined();
     });
 
-    it('migrated metadata matches the expected metadata.json fixture', () => {
-        expect(migrated.metadata).toEqual(expectedMetadata);
+    it('migrated manifest matches the expected metadata.json fixture', () => {
+        expect(migrated).toEqual(expectedMetadata);
     });
 
-    it('sets default input.labGuides in migrated manifest', () => {
-        expect(migrated.input?.labGuides).toBe('./lab-guides');
-    });
-
-    it('sets default output.destination in migrated manifest', () => {
-        expect(migrated.output?.destination).toBe('./dist');
+    it('does not include input or output defaults', () => {
+        expect(migrated.input).toBeUndefined();
+        expect(migrated.output).toBeUndefined();
     });
 });
 
