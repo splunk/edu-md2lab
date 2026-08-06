@@ -746,10 +746,8 @@ describe('metadata-migration: legacy YAML schema detection and migration', () =>
     let expectedMetadata;
 
     beforeAll(() => {
-        const fixturePath = path.join(__dirname, 'fixtures/metadata-migration');
-        legacyRaw = yaml.load(
-            fs.readFileSync(path.join(fixturePath, 'metadata.yaml.legacy'), 'utf-8'),
-        );
+        const fixturePath = path.join(__dirname, 'fixtures/metadata-migration/bak');
+        legacyRaw = yaml.load(fs.readFileSync(path.join(fixturePath, 'metadata.yaml'), 'utf-8'));
         migrated = buildManifestFromLegacy(legacyRaw);
         expectedMetadata = JSON.parse(
             fs.readFileSync(path.join(fixturePath, 'metadata.json'), 'utf-8'),
@@ -809,6 +807,10 @@ describe('metadata-migration: legacy YAML schema detection and migration', () =>
 
     it('sets default input.labGuides in migrated manifest', () => {
         expect(migrated.input?.labGuides).toBe('./lab-guides');
+    });
+
+    it('sets default output.destination in migrated manifest', () => {
+        expect(migrated.output?.destination).toBe('./dist');
     });
 });
 

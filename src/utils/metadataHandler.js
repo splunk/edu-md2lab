@@ -160,10 +160,15 @@ export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml
         logger.warn('    Consider migrating to the new schema. See docs/metadata-schema.md');
         manifest = buildManifestFromLegacy(raw);
         // Write a draft of the new schema for the user to review
-        await writeMigratedManifest(metadataPath, manifest, migrateFormat).catch(() => {
-            // Non-fatal — just warn
-            logger.warn('    Could not write migration draft (check file permissions).');
-        });
+        await writeMigratedManifest(metadataPath, manifest, migrateFormat)
+            .then((newPath) => {
+                // Keep downstream metadata updates pointed at the migrated file.
+                metadataPath = newPath;
+            })
+            .catch(() => {
+                // Non-fatal — just warn
+                logger.warn('    Could not write migration draft (check file permissions).');
+            });
     }
 
     // If the file uses the new flat schema (camelCase without metadata: wrapper),

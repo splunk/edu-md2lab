@@ -16,7 +16,7 @@
         "internal": ["professional services", "sales engineer"]
     },
     "ga": "2025-11-01",
-    "updated": "2026-06-08",
+    "updated": "2026-08-06",
     "splunk": {
         "platform": {
             "deployment": "Cloud",

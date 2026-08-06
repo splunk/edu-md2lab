@@ -85,7 +85,7 @@ export function buildManifestFromLegacy(legacy) {
             labGuides: './lab-guides',
         },
         output: {
-            destination: './',
+            destination: './dist',
         },
     };
 
@@ -108,7 +108,8 @@ export function serializeManifestAsJson(manifest) {
 
 /**
  * Renames the original legacy metadata file to <name>.yaml.legacy, then writes
- * the migrated manifest as the canonical metadata file (<name>.yaml or <name>.json).
+ * the migrated manifest as the canonical metadata file (metadata.yaml by default,
+ * or metadata.json when explicitly requested).
  *
  * @param {string} metadataPath - Original metadata file path
  * @param {Object} manifest - Migrated manifest object
@@ -124,7 +125,7 @@ export async function writeMigratedManifest(metadataPath, manifest, format = 'ya
     await fs.rename(metadataPath, legacyPath);
 
     // Write the migrated file with the canonical name
-    const outExt = format === 'json' ? '.json' : srcExt || '.yaml';
+    const outExt = format === 'json' ? '.json' : '.yaml';
     const newPath = path.join(dir, `${base}${outExt}`);
 
     const content =
