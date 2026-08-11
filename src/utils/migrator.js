@@ -4,6 +4,21 @@ import yaml from 'js-yaml';
 import logger from './logger.js';
 
 /**
+ * Normalizes duration to 'X hours' format.
+ * Extracts the numeric value and converts any time unit variation to 'hours'.
+ */
+function normalizeDuration(duration) {
+    if (!duration || typeof duration !== 'string') return duration;
+
+    // Extract number from duration string
+    const match = duration.match(/^\s*([\d.]+)\s*/);
+    if (!match || !match[1]) return duration;
+
+    const number = match[1];
+    return `${number} hours`;
+}
+
+/**
  * Detects whether the raw loaded metadata object uses the legacy flat schema.
  * Legacy schema has snake_case keys like course_id / course_title at the root level.
  */
@@ -14,6 +29,29 @@ export function isLegacySchema(raw) {
         !raw.metadata &&
         (raw.course_id !== undefined || raw.course_title !== undefined)
     );
+}
+
+/**
+ * Detects a redundant top-level `metadata` wrapper in a metadata file.
+ * The file is already named metadata.json/yaml, so nesting its contents under
+ * another `metadata` key (as an older tool version did) is redundant.
+ */
+export function hasRedundantMetadataWrapper(raw) {
+    return (
+        raw !== null &&
+        typeof raw === 'object' &&
+        raw.metadata !== null &&
+        typeof raw.metadata === 'object' &&
+        !Array.isArray(raw.metadata)
+    );
+}
+
+/**
+ * Promotes the contents of a redundant top-level `metadata` wrapper to the root.
+ */
+export function unwrapRedundantMetadata(raw) {
+    const { metadata, ...rest } = raw;
+    return { ...metadata, ...rest };
 }
 
 /**
@@ -49,7 +87,9 @@ export function buildManifestFromLegacy(legacy) {
         format = [
             {
                 ...(legacy.format !== undefined && { mode: legacy.format }),
-                ...(legacy.duration !== undefined && { duration: legacy.duration }),
+                ...(legacy.duration !== undefined && {
+                    duration: normalizeDuration(legacy.duration),
+                }),
             },
         ];
     }

@@ -478,7 +478,7 @@ describe('custom-output metadata and manifest parsing', () => {
     });
 
     it('parses duration from format[0].duration', () => {
-        expect(getCourseDuration(manifest.metadata)).toBe('9 hrs.');
+        expect(getCourseDuration(manifest.metadata)).toBe('9 hours');
     });
 
     it('parses audience from roles.customer', () => {
@@ -702,7 +702,7 @@ describe('yaml-all-the-things: YAML metadata and manifest parsing', () => {
         const format = getCourseFormat(manifest.metadata);
         expect(Array.isArray(format)).toBe(true);
         expect(format[0].mode).toBe('Instructor-led training with labs');
-        expect(getCourseDuration(manifest.metadata)).toBe('9 hrs.');
+        expect(getCourseDuration(manifest.metadata)).toBe('9 hours');
     });
 
     it('parses roles.customer array', () => {
@@ -782,7 +782,7 @@ describe('metadata-migration: legacy YAML schema detection and migration', () =>
     it('migrates format string and duration to format array', () => {
         expect(Array.isArray(migrated.format)).toBe(true);
         expect(migrated.format[0].mode).toBe('Instructor-led training with labs');
-        expect(migrated.format[0].duration).toBe('9 hrs.');
+        expect(migrated.format[0].duration).toBe('9 hours');
     });
 
     it('migrates audience to roles.customer array', () => {

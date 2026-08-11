@@ -9,7 +9,7 @@ courseDeveloper:
     - Splunk EDU
 format:
     - mode: Instructor-led training with labs
-      duration: 9 hrs.
+      duration: 9 hours
 roles:
     customer:
         - sysadmin

@@ -3,7 +3,13 @@ import path from 'path';
 import yaml from 'js-yaml';
 import logger from './logger.js';
 import { parseDocument, stringify } from 'yaml';
-import { isLegacySchema, buildManifestFromLegacy, writeMigratedManifest } from './migrator.js';
+import {
+    isLegacySchema,
+    buildManifestFromLegacy,
+    writeMigratedManifest,
+    hasRedundantMetadataWrapper,
+    unwrapRedundantMetadata,
+} from './migrator.js';
 
 // ---------------------------------------------------------------------------
 // Field accessors — support both new schema (camelCase) and legacy (snake_case)
@@ -160,6 +166,21 @@ export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml
         logger.warn('    Consider migrating to the new schema. See docs/metadata-schema.md');
         manifest = buildManifestFromLegacy(raw);
         // Write a draft of the new schema for the user to review
+        await writeMigratedManifest(metadataPath, manifest, migrateFormat)
+            .then((newPath) => {
+                // Keep downstream metadata updates pointed at the migrated file.
+                metadataPath = newPath;
+            })
+            .catch(() => {
+                // Non-fatal — just warn
+                logger.warn('    Could not write migration draft (check file permissions).');
+            });
+    } else if (hasRedundantMetadataWrapper(raw)) {
+        isLegacy = true;
+        logger.warn('⚠️  Redundant top-level "metadata" field detected in metadata file.');
+        logger.warn('    Removing it since the file is already named metadata.json/yaml.');
+        manifest = unwrapRedundantMetadata(raw);
+        // Write a draft with the wrapper removed for the user to review
         await writeMigratedManifest(metadataPath, manifest, migrateFormat)
             .then((newPath) => {
                 // Keep downstream metadata updates pointed at the migrated file.

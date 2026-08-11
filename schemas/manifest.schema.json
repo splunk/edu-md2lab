@@ -34,7 +34,8 @@
                             },
                             "duration": {
                                 "type": "string",
-                                "description": "Course duration (e.g., '9 hours', '2 days')"
+                                "pattern": "^[\\d.]+ hours$",
+                                "description": "Course duration in hours (e.g., '9 hours', '2.5 hours')"
                             }
                         },
                         "additionalProperties": false
