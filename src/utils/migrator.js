@@ -21,12 +21,16 @@ function normalizeDuration(duration) {
 /**
  * Detects whether the raw loaded metadata object uses the legacy flat schema.
  * Legacy schema has snake_case keys like course_id / course_title at the root level.
+ * A file already carrying new-schema camelCase fields (courseId / courseTitle) is
+ * never legacy, even if a stray snake_case field is also present.
  */
 export function isLegacySchema(raw) {
     return (
         raw !== null &&
         typeof raw === 'object' &&
         !raw.metadata &&
+        !raw.courseId &&
+        !raw.courseTitle &&
         (raw.course_id !== undefined || raw.course_title !== undefined)
     );
 }

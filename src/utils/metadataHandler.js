@@ -249,10 +249,17 @@ export async function updateMetadataDate(metadataPath, manifestOrMetadata, cours
         const yamlContent = await fs.readFile(metadataPath, 'utf8');
         const yamlDoc = parseDocument(yamlContent);
 
-        // Determine if new or legacy schema by looking at the raw doc structure
+        // Determine schema by looking at the raw doc structure. The new schema may be
+        // wrapped in a `metadata:` key or flat (camelCase fields at the root) — only a
+        // flat doc with snake_case fields and no camelCase equivalents is truly legacy.
         const hasMetadataKey = yamlDoc.has('metadata');
+        const isFlatNewSchema =
+            !hasMetadataKey && (yamlDoc.has('courseId') || yamlDoc.has('courseTitle'));
+
         if (hasMetadataKey) {
             yamlDoc.setIn(['metadata', 'updated'], courseUpdated);
+        } else if (isFlatNewSchema) {
+            yamlDoc.setIn(['updated'], courseUpdated);
         } else {
             // Legacy: update top-level fields
             const legacyCourseId =
