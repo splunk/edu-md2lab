@@ -110,7 +110,10 @@ export async function getMetadataPath(sourceDir) {
 
 export async function loadMetadata(metadataPath) {
     const raw = await fs.readFile(metadataPath, 'utf8');
-    const metadata = metadataPath.endsWith('.json') ? JSON.parse(raw) : yaml.load(raw) || {};
+    // JSON_SCHEMA avoids js-yaml's YAML 1.1 auto-conversion of unquoted dates into Date objects.
+    const metadata = metadataPath.endsWith('.json')
+        ? JSON.parse(raw)
+        : yaml.load(raw, { schema: yaml.JSON_SCHEMA }) || {};
 
     // Normalize legacy course_id padding
     if (metadata.course_id) {
@@ -142,7 +145,9 @@ export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml
             await fs.access(p);
             metadataPath = p;
             const content = await fs.readFile(p, 'utf8');
-            raw = isJson ? JSON.parse(content) : yaml.load(content) || {};
+            raw = isJson
+                ? JSON.parse(content)
+                : yaml.load(content, { schema: yaml.JSON_SCHEMA }) || {};
             break;
         } catch {
             // try next candidate
@@ -216,7 +221,9 @@ export async function loadMetadataAndManifest(sourceDir, { migrateFormat = 'yaml
         try {
             await fs.access(p);
             const content = await fs.readFile(p, 'utf8');
-            const manifestFile = isJson ? JSON.parse(content) : yaml.load(content) || {};
+            const manifestFile = isJson
+                ? JSON.parse(content)
+                : yaml.load(content, { schema: yaml.JSON_SCHEMA }) || {};
             logger.info(`🚚 Loading manifest ${p}`);
             const { metadata: _discard, ...manifestFileConfig } = manifestFile;
             Object.assign(manifest, manifestFileConfig);

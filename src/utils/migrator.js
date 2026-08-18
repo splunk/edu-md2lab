@@ -19,6 +19,18 @@ function normalizeDuration(duration) {
 }
 
 /**
+ * Normalizes a date value to a plain 'YYYY-MM-DD' string.
+ * Guards against Date instances or over-precise ISO timestamps produced by
+ * YAML parsers that auto-convert unquoted dates (e.g. legacy metadata files
+ * loaded before JSON_SCHEMA was enforced).
+ */
+function normalizeDateString(value) {
+    if (value instanceof Date) return value.toISOString().split('T')[0];
+    if (typeof value === 'string') return value.split('T')[0];
+    return value;
+}
+
+/**
  * Detects whether the raw loaded metadata object uses the legacy flat schema.
  * Legacy schema has snake_case keys like course_id / course_title at the root level.
  * A file already carrying new-schema camelCase fields (courseId / courseTitle) is
@@ -120,8 +132,8 @@ export function buildManifestFromLegacy(legacy) {
         ...(courseDeveloper !== undefined && { courseDeveloper }),
         ...(format !== undefined && { format }),
         ...(roles !== undefined && { roles }),
-        ...(legacy.ga !== undefined && { ga: legacy.ga }),
-        ...(legacy.updated !== undefined && { updated: legacy.updated }),
+        ...(legacy.ga !== undefined && { ga: normalizeDateString(legacy.ga) }),
+        ...(legacy.updated !== undefined && { updated: normalizeDateString(legacy.updated) }),
         ...(splunk !== undefined && { splunk }),
     };
 
